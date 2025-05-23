@@ -8,6 +8,7 @@
 │   │
 ├── run.py                 # 启动入口
 
+第一次打开的操作
 
 1.安装require中的库
 
@@ -16,3 +17,4 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:你的sql密码@lo
 
 3.在sql中创建数据库
 CREATE DATABASE mydatabase;
+
