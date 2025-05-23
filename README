@@ -6,5 +6,13 @@
 │   ├── forms.py          # 路由定义
 │   ├── templates/         #各种html文件 网页的设计
 │   │
-│   │
 ├── run.py                 # 启动入口
+
+
+1.安装require中的库
+
+2.跟新run
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:你的sql密码@localhost:3306/mydatabase'
+
+3.在sql中创建数据库
+CREATE DATABASE mydatabase;

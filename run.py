@@ -7,7 +7,7 @@ from flask_food import models
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'supersecretkey'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:linyanzi2005@localhost:3307/mydatabase'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:112605@localhost:3306/mydatabase'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
