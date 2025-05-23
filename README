@@ -1,0 +1,10 @@
+/weEat/
+├── /flask_food/
+│   ├── __init__.py        # 初始化 Flask 应用
+│   ├── routes.py          # 路由定义
+│   ├── models.py          #
+│   ├── forms.py          # 路由定义
+│   ├── templates/         #各种html文件 网页的设计
+│   │
+│   │
+├── run.py                 # 启动入口
