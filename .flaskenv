@@ -1,0 +1,3 @@
+#设置FLASK_APP变量
+FLASK_APP=run.py
+FLASK_DEBUG=1
