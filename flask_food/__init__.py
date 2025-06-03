@@ -37,6 +37,10 @@ def create_app(config_class=Config):
     from .auth.auth_routes import auth_bp  # <--- 导入 auth_bp
     app.register_blueprint(auth_bp, url_prefix='/auth')  # <--- 注册 auth_bp，并设置 URL 前缀
 
+    # --- 注册 user_bp ---
+    from .user.routes import user_bp  # <--- 导入 user_bp
+    app.register_blueprint(user_bp, url_prefix='/user')  # <--- 注册 user_bp，并设置 URL 前缀
+
     # 如果有main蓝图
     # from app.main.routes import main_bp
     # app.register_blueprint(main_bp)

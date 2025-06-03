@@ -1,14 +1,17 @@
 # flask_food/mainRoutes.py
 
 from flask import Blueprint, render_template, redirect, url_for
+from flask_login import login_required, current_user
 
 main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/')
-@main_bp.route('/index') #
+@main_bp.route('/index')
+@login_required
 def index():
     """
-    P1: 未登录时的欢迎页 (Logo, 登录/注册链接)
+    主页 - 需要登录才能访问
     """
-    print("!!!!!! Main blueprint index() view function was called !!!!!!")
-    return render_template('index.html', title='欢迎') # title 会被 base.html 使用
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth.login'))
+    return render_template('index.html', title='欢迎')
