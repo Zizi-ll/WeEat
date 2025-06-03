@@ -1,13 +1,143 @@
-<!--P4: 发布新食谱/内容的表单页面-->
+<!-- app/food/templates/food/add_recipe.html -->
+{% extends "base.html" %}
 
-{% extends 'base.html' %}
-{% block content %}
-<h2>Add Recipe</h2>
-<form method="post">
-    {{ form.hidden_tag() }}
-    {{ form.title.label }} {{ form.title(class="form-control") }}
-    {{ form.category.label }} {{ form.category(class="form-control") }}
-    {{ form.content.label }} {{ form.content(class="form-control", rows=5) }}
-    <button type="submit" class="btn btn-primary mt-2">Submit</button>
-</form>
-{% endblock %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block head_styles %}
+    {{ super() }}
+    <style>
+        /* add_recipe.html 页面的 body 特定背景 */
+        body {
+            background-image: url("{{ url_for('static', filename='images/background_logo.jpg') }}") !important; /* 确保你的背景 logo 图片路径正确 */
+            background-repeat: repeat !important;
+            background-size: 150px !important;
+            background-color: #f0f2f5 !important;
+            /* 为了让 .add-recipe-form-wrapper 居中，body 可能需要 flex */
+            display: flex !important; /* 覆盖 base.html 的 body display (如果不同) */
+            align-items: center !important; /* 垂直居中 wrapper */
+            justify-content: center !important; /* 水平居中 wrapper */
+        }
+
+        /* 覆盖 main 容器的 padding，让 wrapper 完全控制其内部 */
+        main.container-main-content {
+            padding: 0 !important;
+            display: flex; /* 让 wrapper 能更好地在 main 内居中 */
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .add-recipe-form-wrapper {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center; /* 确保 publish-container 垂直居中 */
+            padding: 20px; /* wrapper 的内边距 */
+            box-sizing: border-box;
+            /* min-height: calc(100vh - 70px - 56px); /* 大致计算，可能需要调整 */
+        }
+
+        .publish-container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            width: 90vw;
+            max-width: 1100px; /* 调整最大宽度 */
+            display: flex;
+            gap: 30px;
+        }
+        /* ... (之前提供的 add_recipe.html 中 .left-panel, .right-panel 等其他样式) ... */
+        /* 确保包含所有 .left-panel, .right-panel, .image-upload-area, .btn-publish 等样式 */
+        .left-panel { flex: 0 0 40%; display: flex; flex-direction: column; gap: 20px; }
+        .form-group { margin-bottom: 1rem; }
+        .image-upload-area { flex-grow: 1; background-color: #f8f8f8; border: 2px dashed #d9d9d9; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 15px; overflow-y: auto; position: relative; min-height: 300px; }
+        .image-upload-area .placeholder-content { color: #888; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; width: 100%; height: 100%; pointer-events: none; }
+        .image-upload-area.has-images .placeholder-content { display: none; }
+        .image-upload-area .placeholder-content .camera-icon { font-size: 50px; margin-bottom: 15px; }
+        .image-upload-area .placeholder-content .camera-icon::before { content: '📷'; }
+        .image-upload-area .placeholder-content .upload-text { font-size: 16px; }
+        .image-upload-area .image-preview-item { position: relative; width: 100%; aspect-ratio: 16 / 9; border: 1px solid #eee; border-radius: 4px; overflow: hidden; margin-top: 10px; }
+        .image-upload-area .image-preview-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .image-upload-area .image-preview-item .delete-image-btn { position: absolute; top: 5px; right: 5px; background-color: rgba(0,0,0,0.5); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; line-height: 20px; text-align: center; cursor: pointer; opacity: 0.8; }
+        .image-upload-area .image-preview-item .delete-image-btn:hover { opacity: 1; background-color: rgba(255,0,0,0.7); }
+        .action-buttons { display: flex; margin-top: auto; }
+        .btn-publish { background-color: #ff9933; color: white; border-color: #ff9933; flex-grow: 1; padding: 10px 20px; font-size: 16px; border-radius: 6px; font-weight: 500; cursor: pointer; }
+        .btn-publish:hover { background-color: #e68a2e; }
+        .right-panel { flex: 1; display: flex; flex-direction: column; gap: 20px; min-height: 0; overflow-y: auto; padding-right: 15px; }
+        .title-input, .form-select.title-input, .description-input { width: 100%; padding: 12px; border: 1px solid #d9d9d9; border-radius: 4px; font-size: 14px; box-sizing: border-box; background-color: #fdfdfd; color: #555; }
+        .title-input { font-size: 18px; font-weight: bold; min-height: 40px; }
+        .description-input { min-height: 150px; flex-grow: 1; resize: vertical; }
+        .title-input::placeholder, .description-input::placeholder { color: #aaa; }
+        .form-control.is-invalid, .form-select.is-invalid { border-color: #dc3545 !important; }
+        .invalid-feedback-container .invalid-feedback { display: block; width: 100%; margin-top: .25rem; font-size: .875em; color: #dc3545; }
+    </style>
+{% endblock head_styles %}
+
+{% block app_content %}
+    <div class="add-recipe-form-wrapper">
+        <form method="POST" enctype="multipart/form-data" style="width: auto;">
+            {{ form.hidden_tag() }}
+            <div class="publish-container">
+                <!-- ... (left-panel 和 right-panel 的 HTML 结构与上一条回复相同) ... -->
+                <div class="left-panel">
+                    <div class="form-group">
+                        {{ form.image_file.label(class="form-label") }}
+                        {{ form.image_file(class="form-control" + (" is-invalid" if form.image_file.errors else ""), id="file-input-wtforms") }}
+                        {% if form.image_file.errors %}
+                            <div class="invalid-feedback-container">
+                                {% for error in form.image_file.errors %}
+                                    <span class="invalid-feedback">{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="image-upload-area" id="image-drop-area">
+                        <div class="placeholder-content" id="placeholder">
+                            <div class="camera-icon"></div>
+                            <div class="upload-text">拖拽图片到此处或从上方选择文件 (预览)</div>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                         <button type="submit" class="btn btn-publish">发布食谱</button>
+                    </div>
+                </div>
+                <div class="right-panel">
+                    <div class="form-group">
+                        {{ form.title.label(class="form-label visually-hidden") }}
+                        {{ form.title(class="form-control title-input" + (" is-invalid" if form.title.errors else ""), placeholder="标题：例如，美味侵袭味蕾") }}
+                        {% if form.title.errors %} <div class="invalid-feedback-container"> {% for error in form.title.errors %} <span class="invalid-feedback">{{ error }}</span> {% endfor %} </div> {% endif %}
+                    </div>
+                    <div class="form-group">
+                        {{ form.category_name.label(class="form-label") }}
+                        {{ form.category_name(class="form-select title-input" + (" is-invalid" if form.category_name.errors else "")) }}
+                        {% if form.category_name.errors %} <div class="invalid-feedback-container"> {% for error in form.category_name.errors %} <span class="invalid-feedback">{{ error }}</span> {% endfor %} </div> {% endif %}
+                    </div>
+                    <div class="form-group flex-grow-1 d-flex flex-column">
+                        {{ form.content_body.label(class="form-label visually-hidden") }}
+                        {{ form.content_body(class="form-control description-input flex-grow-1" + (" is-invalid" if form.content_body.errors else ""), placeholder="分享你的美食奇遇....... 食材、步骤等") }}
+                        {% if form.content_body.errors %} <div class="invalid-feedback-container"> {% for error in form.content_body.errors %} <span class="invalid-feedback">{{ error }}</span> {% endfor %} </div> {% endif %}
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+{% endblock app_content %}
+
+{% block body_scripts %}
+    {{ super() }}
+    <!-- JavaScript 代码与上一条回复相同 -->
+    <script>
+        const fileInputWTForms = document.getElementById('file-input-wtforms');
+        const imageDropArea = document.getElementById('image-drop-area');
+        const placeholderContent = imageDropArea.querySelector('.placeholder-content');
+        if (fileInputWTForms) { fileInputWTForms.addEventListener('change', function(event) { handleFilesJS(event.target.files); }); }
+        function handleFilesJS(files) { imageDropArea.querySelectorAll('.image-preview-item').forEach(item => item.remove()); if (files && files.length > 0) { imageDropArea.classList.add('has-images'); if(placeholderContent) placeholderContent.style.display = 'none'; const firstFile = files[0]; if (firstFile && firstFile.type.startsWith('image/')) { const reader = new FileReader(); reader.onload = function(e) { createImagePreviewJS(e.target.result); }
+            reader.readAsDataURL(firstFile); } } else { imageDropArea.classList.remove('has-images'); if(placeholderContent) placeholderContent.style.display = 'flex'; } }
+        function createImagePreviewJS(src) { const previewItem = document.createElement('div'); previewItem.classList.add('image-preview-item'); const img = document.createElement('img'); img.src = src; img.alt = "美食预览图"; const deleteBtn = document.createElement('button'); deleteBtn.classList.add('delete-image-btn'); deleteBtn.innerHTML = '×'; deleteBtn.title = "移除预览"; deleteBtn.addEventListener('click', function(e) { e.stopPropagation(); previewItem.remove(); if (fileInputWTForms) { fileInputWTForms.value = null; } if (imageDropArea.querySelectorAll('.image-preview-item').length === 0) { imageDropArea.classList.remove('has-images'); if(placeholderContent) placeholderContent.style.display = 'flex'; } }); previewItem.appendChild(img); previewItem.appendChild(deleteBtn); imageDropArea.appendChild(previewItem); }
+        imageDropArea.addEventListener('dragover', (event) => { event.preventDefault(); imageDropArea.style.borderColor = '#1890ff'; });
+        imageDropArea.addEventListener('dragleave', () => { imageDropArea.style.borderColor = '#d9d9d9'; });
+        imageDropArea.addEventListener('drop', (event) => { event.preventDefault(); imageDropArea.style.borderColor = '#d9d9d9'; const files = event.dataTransfer.files; if (files && files.length > 0 && fileInputWTForms) { fileInputWTForms.files = files; const changeEvent = new Event('change', { bubbles: true }); fileInputWTForms.dispatchEvent(changeEvent); } });
+        if (fileInputWTForms && fileInputWTForms.files && fileInputWTForms.files.length > 0) { handleFilesJS(fileInputWTForms.files); } else if (imageDropArea.querySelectorAll('.image-preview-item').length === 0) { if(placeholderContent) placeholderContent.style.display = 'flex'; }
+    </script>
+{% endblock body_scripts %}

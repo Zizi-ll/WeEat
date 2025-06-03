@@ -17,6 +17,30 @@
     <!-- 自定义 CSS 文件 -->
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
 
+     <style>
+        /* 可以在你的 style.css 中添加 */
+        html, body {
+            height: 100%; /* 确保 html 和 body 至少是视口高度 */
+        }
+        body {
+            display: flex; /* 使用 flex 布局来组织 header, main, footer */
+            flex-direction: column;
+            font-family: -apple-system, BlinkMacSystemFont, /* ... */ sans-serif; /* 移动通用字体到这里 */
+            /* 移除这里的背景图片，让子模板控制或 style.css 控制 */
+        }
+        main.container {
+            flex: 1 0 auto; /* 让 main 区域占据可用空间 */
+            padding-top: 70px; /* 为 fixed navbar 留白 */
+            padding-bottom: 20px;
+        }
+        .footer {
+            flex-shrink: 0; /* 防止 footer 在内容少时被挤压 */
+        }
+    </style>
+    {% block head_styles %} {# 重命名为 head_styles 更清晰 #}
+    <!-- 子模板可以在这里插入额外的 CSS link 或 style 标签 -->
+    {% endblock head_styles %}
+
     {% if title %}
         <title>weEat - {{ title }}</title>
     {% else %}
@@ -83,12 +107,14 @@
     <main role="main" class="container" style="padding-top: 70px; padding-bottom: 20px;"> <!-- 为 fixed-top navbar 留出空间 -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
+                <div style="position: fixed; top: 70px; left: 50%; transform: translateX(-50%); z-index: 1050; width: auto; min-width: 300px;">
                 {% for category, message in messages %}
                     <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                         {{ message }}
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 {% endfor %}
+                </div>
             {% endif %}
         {% endwith %}
 

@@ -1,4 +1,6 @@
 # 应用工厂函数，初始化Flask应用和扩展
+import os
+
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -13,6 +15,7 @@ migrate = Migrate() #迁移对象
 bcrypt = Bcrypt()
 login_manager = LoginManager() #登录管理的对象
 login_manager.login_view = 'auth.login'
+login_manager.login_message_category = 'info'
 csrf = CSRFProtect()
 
 def create_app(config_class=Config):
@@ -25,6 +28,14 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
     bcrypt.init_app(app)
     csrf.init_app(app)
+
+    try:
+        recipes_upload_abs = app.config.get('UPLOAD_FOLDER_RECIPES_ABS')
+        if recipes_upload_abs and not os.path.exists(recipes_upload_abs):
+            os.makedirs(recipes_upload_abs)
+            app.logger.info(f"Created recipes upload folder: {recipes_upload_abs}")
+    except Exception as e:
+        app.logger.error(f"Could not create recipes upload folder: {e}")
 
     #主蓝图
     from .mainRoutes import main_bp
