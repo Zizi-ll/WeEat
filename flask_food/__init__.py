@@ -16,7 +16,7 @@ login_manager.login_view = 'auth.login'
 csrf = CSRFProtect()
 
 def create_app(config_class=Config):
-    app = Flask(__name__) #Flask实例
+    app = Flask(__name__, static_folder='static') #Flask实例
     app.config.from_object(config_class) #配置 连接数据库
 
     #将Flask扩展与Flask实例app进行绑定
