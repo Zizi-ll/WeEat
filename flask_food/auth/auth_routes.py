@@ -9,7 +9,7 @@ auth_bp = Blueprint('auth', __name__)
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('food.browse'))
+        return redirect(url_for('food.browsePage'))
         
     form = LoginForm()
     if form.validate_on_submit():
@@ -18,7 +18,7 @@ def login():
             login_user(user, remember=form.remember_me.data)
             next_page = request.args.get('next')
             if not next_page or urlparse(next_page).netloc != '':
-                next_page = url_for('food.browse')
+                next_page = url_for('food.browsePage')
             return redirect(next_page)
         else:
             flash('用户名或密码错误，请重试。', 'danger')

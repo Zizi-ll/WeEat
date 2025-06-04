@@ -31,7 +31,7 @@ def recipe_detail(recipe_id):
     recipe = Post.query.get_or_404(recipe_id)
     return render_template('food/recipe_detail.html', title=recipe.title, recipe=recipe)
 
-@food_bp.route('/browse')
+@food_bp.route('/browsePage', endpoint='browsePage')  # 显式指定端点名
 @login_required
 def browse():
-    return render_template('food/browse.html', title='浏览美食')
+    return render_template('food/browsePage.html', title='浏览美食')

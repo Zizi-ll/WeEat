@@ -2,7 +2,7 @@
 weEat/
 ├── .venv/
 ├── flask_food/
-│   ├── auth/ #用户认真的表单和路由
+│   ├── auth/ #用户认证的表单和路由
 │   │   ├── auth_forms.py
 │   │   └── auth_routes.py
 │   ├── food/ #美食食谱的表单和路由

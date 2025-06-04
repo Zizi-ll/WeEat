@@ -36,14 +36,18 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0"> <!-- Bootstrap 的类 me-auto 将左侧项目推向左边 -->
-                        <li class="nav-item">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
                             <a class="nav-link {% if request.endpoint == 'main.index' %}active{% endif %}" aria-current="page" href="{{ url_for('main.index') }}">首页</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {% if request.endpoint.startswith('food.') and request.endpoint != 'food.add_recipe' %}active{% endif %}" href="{{ url_for('food.index') }}">食谱</a> <!-- 假设 food.index 是食谱列表 -->
                         </li>
                         <!-- 可以添加更多通用导航链接 -->
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'food.browsePage' %}active{% endif %}" href="{{ url_for('food.browsePage') }}">查看</a>
+                        </li>> <!-- Bootstrap 的类 me-auto 将左侧项目推向左边 -->
+
                     </ul>
                     <ul class="navbar-nav mb-2 mb-lg-0"> <!-- 右侧导航 -->
                         {% if current_user.is_authenticated %}
