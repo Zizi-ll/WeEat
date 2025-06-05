@@ -1,14 +1,11 @@
-<!--基础模版，其他模版继承它 -->
-
-
 <!doctype html>
-<html lang="zh-CN"> <!-- 语言设置为中文 -->
+<html lang="zh-CN">
 <head>
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!-- Bootstrap CSS (使用 Bootstrap 5.x 的 CDN) 使用Bootstrap 提供的很多现成的样式和组件-->
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
 
     <!-- Bootstrap Icons -->
@@ -16,6 +13,152 @@
 
     <!-- 自定义 CSS 文件 -->
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        /* 自定义样式 - 深巧克力色主题 */
+        :root {
+            --primary-brown: #5D4037; /* 深巧克力棕色 */
+            --dark-brown: #3E2723;    /* 更深的巧克力色 */
+            --light-brown: #8D6E63;   /* 浅巧克力色 */
+            --cream-white: #FFF8F0;    /* 温暖的米白色 */
+            --soft-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* 更明显的阴影 */
+            --gold-accent: #D4A76A;   /* 金色点缀 */
+        }
+
+        body {
+            background-image: url("{{ url_for('static', filename='images/background.png') }}");
+            background-size: cover;
+            background-attachment: fixed;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-color: var(--cream-white); /* 原背景色作为备用 */
+        }
+
+        /* 为内容区域添加半透明背景 */
+        .main-content {
+            background-color: rgba(255, 255, 255, 0.92); /* 92% 不透明的白色 */
+            backdrop-filter: blur(5px); /* 可选：毛玻璃效果 */
+        }
+
+        .navbar {
+            background-color: rgba(62, 39, 35, 0.95) !important; /* 95% 不透明 */
+            backdrop-filter: blur(8px); /* 可选：毛玻璃效果 */
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: white !important;
+            display: flex;
+            align-items: center;
+        }
+
+        .navbar-brand img {
+            margin-right: 10px;
+            border-radius: 50%;
+            border: 2px solid var(--gold-accent);
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.9) !important;
+            font-weight: 500;
+            padding: 8px 15px;
+            margin: 0 3px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover, .nav-link:focus {
+            color: white !important;
+            background-color: var(--primary-brown);
+            transform: translateY(-2px);
+        }
+
+        .nav-link.active {
+            color: white !important;
+            background-color: var(--primary-brown);
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .dropdown-menu {
+            background-color: white;
+            border: none;
+            box-shadow: var(--soft-shadow);
+            border-top: 3px solid var(--gold-accent);
+        }
+
+        .dropdown-item {
+            padding: 8px 16px;
+            transition: all 0.2s;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f5f5f5;
+            color: var(--dark-brown) !important;
+            padding-left: 20px;
+        }
+
+        .footer {
+            background-color: var(--dark-brown);
+            color: white !important;
+            padding: 20px 0;
+            margin-top: 40px;
+            border-top: 2px solid var(--gold-accent);
+        }
+
+        .footer .text-muted {
+            color: rgba(255, 255, 255, 0.8) !important;
+            font-size: 0.9rem;
+        }
+
+        .container.main-content {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: var(--soft-shadow);
+            padding: 30px;
+            margin-top: 30px;
+            margin-bottom: 40px;
+            border-top: 4px solid var(--gold-accent);
+        }
+
+        /* 按钮样式增强 */
+        .btn-primary {
+            background-color: var(--primary-brown);
+            border-color: var(--dark-brown);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--dark-brown);
+            border-color: var(--dark-brown);
+            transform: translateY(-1px);
+        }
+
+        /* 活动链接指示器 */
+        .active-indicator {
+            height: 3px;
+            background: var(--gold-accent);
+            width: 100%;
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            border-radius: 3px;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 992px) {
+            .navbar-collapse {
+                padding: 15px 0;
+                background-color: var(--dark-brown);
+                border-radius: 0 0 8px 8px;
+                box-shadow: var(--soft-shadow);
+            }
+
+            .nav-item {
+                margin: 5px 0;
+            }
+        }
+    </style>
 
     {% if title %}
         <title>weEat - {{ title }}</title>
@@ -25,40 +168,52 @@
 </head>
 <body>
     <header class="site-header">
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top"> <!-- 响应式导航栏 设置背景为深色 可以改-->
+        <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
             <div class="container">
                 <a class="navbar-brand" href="{{ url_for('main.index') }}">
-                    <!-- 在导航栏处放logo -->
-                    <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="weEat Logo" width="30" height="30" class="d-inline-block align-top">
-                    weEat
+                    <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="weEat Logo" width="35" height="35">
+                    <span>weEat</span>
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0"> <!-- Bootstrap 的类 me-auto 将左侧项目推向左边 -->
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.endpoint == 'main.index' %}active{% endif %}" aria-current="page" href="{{ url_for('main.index') }}">首页</a>
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item position-relative">
+                            <a class="nav-link {% if request.endpoint == 'main.index' %}active{% endif %}" aria-current="page" href="{{ url_for('main.index') }}">
+                                首页
+                                {% if request.endpoint == 'main.index' %}<span class="active-indicator"></span>{% endif %}
+                            </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.endpoint.startswith('food.') and request.endpoint != 'food.add_recipe' %}active{% endif %}" href="{{ url_for('food.index') }}">食谱</a> <!-- 假设 food.index 是食谱列表 -->
+                        <li class="nav-item position-relative">
+                            <a class="nav-link {% if request.endpoint.startswith('food.') and request.endpoint != 'food.add_recipe' %}active{% endif %}" href="{{ url_for('food.index') }}">
+                                食谱
+                                {% if request.endpoint.startswith('food.') and request.endpoint != 'food.add_recipe' %}<span class="active-indicator"></span>{% endif %}
+                            </a>
                         </li>
-                        <!-- 可以添加更多通用导航链接 -->
+                        <li class="nav-item position-relative">
+                            <a class="nav-link {% if request.endpoint == 'food.browsePage' %}active{% endif %}" href="{{ url_for('food.browsePage') }}">
+                                查看
+                                {% if request.endpoint == 'food.browsePage' %}<span class="active-indicator"></span>{% endif %}
+                            </a>
+                        </li>
                     </ul>
-                    <ul class="navbar-nav mb-2 mb-lg-0"> <!-- 右侧导航 -->
+                    <ul class="navbar-nav mb-2 mb-lg-0">
                         {% if current_user.is_authenticated %}
                             <li class="nav-item">
-                                <a class="nav-link {% if request.endpoint == 'food.add_recipe' %}active{% endif %}" href="{{ url_for('food.add_recipe') }}"><i class="bi bi-plus-circle"></i> 发布食谱</a>
+                                <a class="nav-link {% if request.endpoint == 'food.add_recipe' %}active{% endif %}" href="{{ url_for('food.add_recipe') }}">
+                                    <i class="bi bi-plus-circle"></i> 发布食谱
+                                </a>
                             </li>
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle {% if request.endpoint.startswith('user.') or request.endpoint == 'auth.account' %}active{% endif %}" href="#" id="navbarDropdownUser" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                     <i class="bi bi-person-circle"></i> {{ current_user.username }}
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownUser">
-                                    <li><a class="dropdown-item" href="{{ url_for('user.profile', username=current_user.username) }}">个人主页</a></li>
-                                    <li><a class="dropdown-item" href="#">账号设置</a></li> <!-- 待实现 -->
+                                    <li><a class="dropdown-item" href="{{ url_for('user.profile', username=current_user.username) }}"><i class="bi bi-person"></i> 个人主页</a></li>
+                                    <li><a class="dropdown-item" href="#"><i class="bi bi-gear"></i> 账号设置</a></li>
                                     <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">退出登录</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> 退出登录</a></li>
                                 </ul>
                             </li>
                         {% else %}
@@ -69,9 +224,9 @@
                                 <a class="nav-link {% if request.endpoint == 'auth.register' %}active{% endif %}" href="{{ url_for('auth.register') }}">注册</a>
                             </li>
                         {% endif %}
-                        {% if current_user.is_authenticated and current_user.is_admin %} <!-- 假设 User 模型有 is_admin 属性 -->
+                        {% if current_user.is_authenticated and current_user.is_admin %}
                              <li class="nav-item">
-                                <a class="nav-link {% if request.endpoint.startswith('admin.') %}active{% endif %}" href="{{ url_for('admin.review_dashboard') }}">管理后台</a> <!-- 假设 admin 蓝图有 review_dashboard 视图 -->
+                                <a class="nav-link {% if request.endpoint.startswith('admin.') %}active{% endif %}" href="{{ url_for('admin.review_dashboard') }}">管理后台</a>
                             </li>
                         {% endif %}
                     </ul>
@@ -80,7 +235,7 @@
         </nav>
     </header>
 
-    <main role="main" class="container" style="padding-top: 70px; padding-bottom: 20px;"> <!-- 为 fixed-top navbar 留出空间 -->
+    <main role="main" class="container main-content" style="padding-top: 80px; padding-bottom: 20px;">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -97,19 +252,20 @@
         {% endblock app_content %}
     </main>
 
-    <footer class="footer mt-auto py-3 bg-light">
+    <footer class="footer mt-auto py-3">
         <div class="container text-center">
-            <span class="text-muted">© {{ current_year }} weEat. All Rights Reserved.</span> <!-- 动态年份 -->
+            <span class="text-muted">© {{ current_year }} weEat. All Rights Reserved.</span>
+            <div class="mt-2">
+                <a href="#" class="text-light mx-2"><i class="bi bi-facebook"></i></a>
+                <a href="#" class="text-light mx-2"><i class="bi bi-instagram"></i></a>
+                <a href="#" class="text-light mx-2"><i class="bi bi-twitter"></i></a>
+            </div>
         </div>
     </footer>
 
-    <!-- Bootstrap Bundle with Popper (Bootstrap 5.x 的 CDN) -->
+    <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script>
 
-    <!-- (可选) 你自己的 JavaScript 文件 -->
-    <!-- <script src="{{ url_for('static', filename='js/script.js') }}"></script> -->
-
-    <!-- (可选) 用于动态年份的脚本 -->
     <script>
         document.addEventListener('DOMContentLoaded', (event) => {
             const yearSpans = document.querySelectorAll('.footer .text-muted');
