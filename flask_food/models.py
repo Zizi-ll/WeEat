@@ -1,6 +1,6 @@
 #数据库模型，表->类
 #为所有的表创建模型，并且定义好表之间的关系！完成数据库设计之后才可以写这个文件
-
+import json
 
 #当你更改了 models.py 中的模型 (例如，添加了一个新表、给表添加了新列、修改了列类型等) 之后，你需要运行此命令。它会检测模型的更改，并生成一个迁移脚本。
 #flask db migrate -m "一个描述性的消息，比如 'add user table' 或 'add email to user'"
@@ -95,7 +95,7 @@ class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True, index=True)
     title = db.Column(db.String(200), nullable=False, index=True)
     content_body = db.Column(db.Text, nullable=False)
-    image_url = db.Column(db.String(255), nullable=True) # 将存储图片的相对路径
+    image_paths_json = db.Column(db.Text, nullable=True) # 将存储图片的相对路径
     created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow, index=True)
     updated_at = db.Column(db.DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
     is_published = db.Column(db.Boolean, default=True)
@@ -109,6 +109,17 @@ class Post(db.Model):
     comments = db.relationship("Comment", back_populates="post", cascade="all, delete-orphan")
     liked_by_users = db.relationship("User", secondary=post_likes, back_populates="liked_posts")
     favorited_by_users = db.relationship("User", secondary=post_favorites, back_populates="favorited_posts")
+
+    @property
+    def image_paths(self):
+        if self.image_paths_json:
+            return json.loads(self.image_paths_json)
+        return []
+
+    @image_paths.setter
+    def image_paths(self, paths_list):
+        self.image_paths_json = json.dumps(paths_list)
+
     def __repr__(self):
         return f'<Post "{self.title[:30]}..."> ({self.author.username})>'
 

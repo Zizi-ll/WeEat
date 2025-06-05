@@ -1,52 +1,313 @@
-<!--P1: 未登录时的欢迎页 (Logo, 登录/注册链接) -->
-
 {% extends 'base.html' %}
-{% block content %}
-<div class="container vh-100 d-flex justify-content-center align-items-center">
-    <div class="text-center p-5 shadow-lg rounded" style="background-color: rgba(255, 255, 255, 0.9);">
-        <!-- Logo -->
-        <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="weEat Logo" class="mb-4" style="max-width: 250px; height: auto;">
+{% block app_content %}
+<style>
+    /* 主容器样式 - 全屏渐变背景 */
+    .welcome-container {
+        position: relative;
+        min-height: 100vh;
+        background: linear-gradient(135deg, rgba(93, 64, 55, 0.9) 0%, rgba(62, 39, 35, 0.95) 100%),
+                    url("{{ url_for('static', filename='images/food-background.jpg') }}");
+        background-size: cover;
+        background-position: center;
+        background-blend-mode: overlay;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        overflow: hidden;
+    }
 
-        <h1 class="display-4 mb-3">欢迎来到 weEat</h1>
-        <p class="lead mb-4">
-            发现、分享、品尝令人垂涎的美味食谱。<br>
-            加入我们的美食社区，开启您的烹饪之旅！
+    /* 背景装饰元素 */
+    .welcome-container::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(212, 167, 106, 0.1) 0%, transparent 70%);
+        animation: rotate 20s linear infinite;
+        z-index: 0;
+    }
+
+    @keyframes rotate {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* 主卡片样式 */
+    .welcome-card {
+        background: rgba(255, 248, 240, 0.97);
+        border-radius: 20px;
+        padding: 3.5rem 3rem;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        max-width: 650px;
+        width: 100%;
+        margin: 0 auto;
+        position: relative;
+        z-index: 1;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        transform-style: preserve-3d;
+    }
+
+    .welcome-card:hover {
+        transform: translateY(-10px) scale(1.02);
+        box-shadow: 0 30px 60px -10px rgba(0, 0, 0, 0.4);
+    }
+
+    /* 卡片顶部装饰条 */
+    .welcome-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 6px;
+        background: linear-gradient(90deg, #D4A76A, #8D6E63, #D4A76A);
+        background-size: 200% 100%;
+        animation: gradient 3s ease infinite;
+    }
+
+    @keyframes gradient {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    /* Logo样式 */
+    .welcome-logo {
+        width: 200px;
+        height: 200px;
+        margin-bottom: 1.5rem;
+        object-fit: contain;
+        filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.2));
+        transition: all 0.4s ease;
+        border-radius: 50%;
+        border: 3px solid rgba(255, 255, 255, 0.8);
+        background-color: white;
+        padding: 10px;
+    }
+
+    .welcome-logo:hover {
+        transform: scale(1.05) rotate(5deg);
+        filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.3));
+    }
+
+    /* 标题样式 */
+    .welcome-title {
+        font-family: 'Playfair Display', serif;
+        font-weight: 700;
+        color: #3E2723;
+        margin-bottom: 1.5rem;
+        position: relative;
+        display: inline-block;
+        font-size: 2.5rem;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    }
+
+    .welcome-title::after {
+        content: '';
+        position: absolute;
+        bottom: -12px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100px;
+        height: 4px;
+        background: linear-gradient(90deg, #D4A76A, #8D6E63);
+        border-radius: 2px;
+    }
+
+    /* 副标题样式 */
+    .welcome-subtitle {
+        font-size: 1.25rem;
+        color: #5D4037;
+        margin-bottom: 2.5rem;
+        line-height: 1.8;
+        font-weight: 400;
+    }
+
+    /* 分隔线 */
+    .welcome-divider {
+        border: none;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(93, 64, 55, 0.3), transparent);
+        margin: 2.5rem 0;
+    }
+
+    /* 按钮样式 */
+    .welcome-btn {
+        padding: 1rem 2.5rem;
+        border-radius: 50px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+        border: none;
+        position: relative;
+        overflow: hidden;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .welcome-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(rgba(255,255,255,0.1), rgba(255,255,255,0));
+        z-index: 1;
+    }
+
+    .btn-login {
+        background: linear-gradient(135deg, #5D4037, #3E2723);
+        box-shadow: 0 5px 15px rgba(93, 64, 55, 0.4);
+    }
+
+    .btn-register {
+        background: linear-gradient(135deg, #D4A76A, #B2895B);
+        box-shadow: 0 5px 15px rgba(212, 167, 106, 0.4);
+        color: #3E2723;
+    }
+
+    .welcome-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    .welcome-btn:active {
+        transform: translateY(1px);
+    }
+
+    .welcome-btn i {
+        margin-right: 10px;
+        font-size: 1.1rem;
+        transition: transform 0.3s ease;
+    }
+
+    /* 已登录状态提示 */
+    .logged-in-alert {
+        background: rgba(255, 255, 255, 0.95);
+        border-left: 4px solid #D4A76A;
+        border-radius: 6px;
+        padding: 1rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    /* 响应式调整 */
+    @media (max-width: 768px) {
+        .welcome-container {
+            padding: 1.5rem;
+        }
+
+        .welcome-card {
+            padding: 2.5rem 2rem;
+            border-radius: 15px;
+        }
+
+        .welcome-logo {
+            width: 150px;
+            height: 150px;
+        }
+
+        .welcome-title {
+            font-size: 2rem;
+        }
+
+        .welcome-subtitle {
+            font-size: 1.1rem;
+        }
+
+        .welcome-btn {
+            padding: 0.9rem 1.5rem;
+            font-size: 0.85rem;
+        }
+    }
+</style>
+
+<!-- 添加Google字体 -->
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+
+<div class="welcome-container">
+    <div class="welcome-card">
+        <!-- Logo - 确保路径正确 -->
+        <div class="text-center">
+            <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="weEat Logo" class="welcome-logo">
+        </div>
+
+        <h1 class="welcome-title text-center">Welcome to weEat</h1>
+        <p class="welcome-subtitle text-center">
+            探索全球美食精髓，分享您的独家秘方。<br>
+            加入我们的美食家社区，开启您的味觉盛宴之旅！
         </p>
-        <hr class="my-4">
+        <hr class="welcome-divider">
 
         {% if current_user.is_authenticated %}
-            <!-- 如果用户因为某种原因已登录但访问了此页面 -->
-            <div class="alert alert-info">
-                您已登录，{{ current_user.username }}！
+            <!-- 如果用户已登录 -->
+            <div class="alert logged-in-alert mb-4">
+                <i class="bi bi-check-circle-fill text-success"></i> 欢迎回来，{{ current_user.username }}！
             </div>
-            <a href="{{ url_for('food.index') }}" class="btn btn-primary btn-lg px-5">
-                <i class="bi bi-card-list"></i> 查看食谱
-            </a>
-            <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-secondary btn-lg mt-2">
-                退出登录
-            </a>
-        {% else %}
-            <!-- 未登录时显示 -->
-            <p class="mb-4">准备好开始了吗？</p>
-            <div>
-                <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg px-5 me-3">
-                    <i class="bi bi-box-arrow-in-right"></i> 登录
+            <div class="d-grid gap-3">
+                <a href="{{ url_for('food.index') }}" class="btn btn-login text-white welcome-btn">
+                    <i class="bi bi-book"></i> 浏览食谱收藏
                 </a>
-                <a href="{{ url_for('auth.register') }}" class="btn btn-success btn-lg px-5">
-                    <i class="bi bi-person-plus-fill"></i> 注册
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-secondary welcome-btn">
+                    <i class="bi bi-box-arrow-right"></i> 退出登录
+                </a>
+            </div>
+        {% else %}
+            <!-- 未登录状态 -->
+            <p class="text-center mb-4" style="color: #5D4037; font-size: 1.1rem;">立即加入我们的美食社区</p>
+            <div class="d-grid gap-3">
+                <a href="{{ url_for('auth.login') }}" class="btn btn-login text-white welcome-btn">
+                    <i class="bi bi-box-arrow-in-right"></i> 登录账户
+                </a>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-register welcome-btn">
+                    <i class="bi bi-person-plus"></i> 注册新账户
                 </a>
             </div>
         {% endif %}
     </div>
 </div>
-    <!-- 前端开发的朋友请尽情迸发你的设计灵感~添加一些背景图片或颜色到 body -->
-<style>
-    body {
-        /* background-image: url("{{ url_for('static', filename='images/background_welcome.jpg') }}"); */
-        background-color: #f0f2f5;
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-    }
-</style>
+
+<!-- 动画效果 -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 卡片入场动画
+        const card = document.querySelector('.welcome-card');
+        if (card) {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(30px) scale(0.95)';
+            card.style.transition = 'all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+
+            setTimeout(() => {
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0) scale(1)';
+            }, 200);
+        }
+
+        // 按钮图标悬停动画
+        const buttons = document.querySelectorAll('.welcome-btn');
+        buttons.forEach(button => {
+            button.addEventListener('mouseenter', function() {
+                const icon = this.querySelector('i');
+                if (icon) {
+                    icon.style.transform = 'translateX(5px)';
+                }
+            });
+            button.addEventListener('mouseleave', function() {
+                const icon = this.querySelector('i');
+                if (icon) {
+                    icon.style.transform = 'translateX(0)';
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}

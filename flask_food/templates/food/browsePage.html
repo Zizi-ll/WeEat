@@ -1,12 +1,230 @@
-<!--P2浏览页面-->
+{% extends 'base.html' %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% block app_content %}
+<style>
+    .top-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 25px;
+        gap: 15px;
+    }
 
-</body>
-</html>
+    .my-button {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        background: linear-gradient(135deg, #431c07 0%, #e7c29b 100%);
+        border: none;
+        color: white;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .my-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .add-button {
+        width: 50px;
+        height: 50px;
+        border: none;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #e7c29b 0%, #52331c 100%);
+        color: white;
+        flex-shrink: 0;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .add-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .search-container {
+        flex-grow: 1;
+        max-width: calc(100% - 120px);
+    }
+
+    .search-container .input-group {
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .search-container .form-control {
+        border: none;
+        padding: 12px 15px;
+        font-size: 0.95rem;
+    }
+
+    .search-container .btn {
+        background-color: white;
+        border: none;
+        color: #6c757d;
+        padding: 0 15px;
+    }
+
+    .text-box-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .text-box {
+        background-color: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        transition: transform 0.2s, box-shadow 0.2s;
+        border-left: 4px solid #552105;
+    }
+
+    .text-box:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+    }
+
+    .text-box h5 {
+        color: #343a40;
+        margin-bottom: 10px;
+        font-weight: 600;
+    }
+
+    .text-box p {
+        color: #6c757d;
+        margin-bottom: 0;
+        line-height: 1.6;
+    }
+
+    .notification-bell {
+        position: fixed;
+        left: 25px;
+        bottom: 25px;
+        background: linear-gradient(135deg, #d6bca0 0%, #fad0c4 100%);
+        color: white;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        cursor: pointer;
+        z-index: 1000;
+        transition: transform 0.3s;
+    }
+
+    .notification-bell:hover {
+        transform: scale(1.1) rotate(15deg);
+    }
+
+    .notification-badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background: linear-gradient(135deg, #431c07 0%, #7b2c03 100%);
+        color: white;
+        border-radius: 50%;
+        width: 22px;
+        height: 22px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .scrollable-content {
+        max-height: calc(100vh - 180px);
+        overflow-y: auto;
+        padding-right: 5px;
+    }
+
+    /* 自定义滚动条 */
+    .scrollable-content::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .scrollable-content::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+    }
+
+    .scrollable-content::-webkit-scrollbar-thumb {
+        background: linear-gradient(#d5bca0, #8c573e);
+        border-radius: 3px;
+    }
+</style>
+
+<div class="container mt-4">
+    <!-- 顶部栏：我的按钮 + 搜索框 + 加号按钮 -->
+    <div class="top-bar">
+        <button class="btn my-button">
+            <i class="bi bi-person-fill"></i>
+        </button>
+
+        <div class="search-container">
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="搜索食谱、食材...">
+                <button class="btn" type="button">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+        </div>
+
+        <button class="add-button" onclick="location.href='{{ url_for("food.add_recipe") }}'">
+            <i class="bi bi-plus-lg"></i>
+        </button>
+    </div>
+
+    <!-- 可滚动的内容区域 -->
+    <div class="scrollable-content">
+        <div class="text-box-container">
+            <div class="text-box">
+                <h5>今日推荐：番茄炒蛋</h5>
+                <p>经典家常菜，酸甜可口，营养丰富。准备时间15分钟，烹饪时间5分钟，适合新手尝试。</p>
+            </div>
+
+            <div class="text-box">
+                <h5>健康小贴士</h5>
+                <p>每天摄入5种不同颜色的蔬菜水果，可以确保获得全面的维生素和矿物质营养。</p>
+            </div>
+
+            <div class="text-box">
+                <h5>本周热门食谱</h5>
+                <p>1. 蒜香排骨 2. 清蒸鲈鱼 3. 麻婆豆腐 4. 西兰花炒虾仁 5. 红烧肉</p>
+            </div>
+
+            <div class="text-box">
+                <h5>食材特惠</h5>
+                <p>本周超市特价：新鲜鸡蛋3.99元/盒，西红柿2.99元/斤，优质大米39.9元/10kg。</p>
+            </div>
+
+            <div class="text-box">
+                <h5>烹饪技巧</h5>
+                <p>炒青菜时，热锅冷油，大火快炒，最后加盐，可以保持蔬菜的脆嫩和鲜绿色泽。</p>
+            </div>
+
+            <div class="text-box">
+                <h5>新功能上线</h5>
+                <p>现在可以创建个人食谱集，收藏您喜爱的菜谱，并分享给家人朋友！</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 左下角通知图标 -->
+    <div class="notification-bell">
+        <i class="bi bi-bell-fill" style="font-size: 1.3rem;"></i>
+        <span class="notification-badge">3</span>
+    </div>
+</div>
+{% endblock %}

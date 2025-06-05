@@ -1,12 +1,31 @@
 <!--P3: 用户个人资料页-->
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'base.html' %}
 
-</body>
-</html>
+{% block app_content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card mt-5">
+                <div class="card-header">
+                    <h2>{{ user.username }} 的个人主页</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <img src="{{ url_for('static', filename='images/default-avatar.png') }}"
+                                 class="img-fluid rounded-circle" alt="用户头像">
+                        </div>
+                        <div class="col-md-8">
+                            <h3>用户信息</h3>
+                            <p><strong>用户名：</strong> {{ user.username }}</p>
+                            <p><strong>邮箱：</strong> {{ user.email }}</p>
+                            <p><strong>注册时间：</strong> {{ user.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

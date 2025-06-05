@@ -1,0 +1,104 @@
+.add-recipe-layout {
+    display: flex;
+    gap: 20px; /* 两栏之间的间隙 */
+    flex-wrap: wrap; /* 在小屏幕上换行 */
+}
+
+.image-upload-panel {
+    flex: 1; /* 占据可用空间的一份 */
+    min-width: 300px; /* 最小宽度，防止被过度挤压 */
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+.recipe-details-panel {
+    flex: 2; /* 占据可用空间的两份 */
+    min-width: 300px;
+    padding: 15px;
+    /* border: 1px solid #ddd; */ /* 可选边框 */
+    /* border-radius: 5px; */
+}
+
+.image-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* 响应式网格，每列最小100px */
+    gap: 10px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+.upload-slot, .preview-slot {
+    width: 100%;
+    padding-bottom: 100%; /* 保持1:1的宽高比 */
+    position: relative;
+    border: 2px dashed #ccc;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    overflow: hidden; /* 确保图片不溢出 */
+    background-color: #fff;
+}
+
+.upload-slot.add-image-button {
+    flex-direction: column; /* 使图标和文字垂直排列 */
+    text-align: center;
+    font-size: 0.9em;
+    color: #666;
+}
+.upload-slot.add-image-button i {
+    font-size: 2em;
+    margin-bottom: 5px;
+}
+
+
+.preview-slot img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* 图片覆盖整个容器，可能会裁剪 */
+    border-radius: 3px;
+}
+
+.preview-slot .delete-image-btn {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background-color: rgba(255, 0, 0, 0.7);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+    line-height: 18px; /* 调整使 X 居中 */
+    text-align: center;
+    cursor: pointer;
+    padding: 0;
+    z-index: 10;
+}
+.preview-slot .delete-image-btn:hover {
+    background-color: rgba(255, 0, 0, 1);
+}
+
+
+.publish-button {
+    font-size: 1.1em;
+    padding: 10px 20px;
+}
+
+/* 小屏幕适配 */
+@media (max-width: 768px) {
+    .add-recipe-layout {
+        flex-direction: column;
+    }
+    .image-upload-panel, .recipe-details-panel {
+        flex: none; /* 取消flex比例 */
+        width: 100%;
+    }
+}
