@@ -57,10 +57,10 @@ def add_recipe():
             # 获取上传的图片文件列表 (通过JS的 FormData append)
             uploaded_recipe_images = request.files.getlist('recipe_images')
 
-            # if not title or not category or not content:
-            #     flash('标题、分类和内容不能为空！', 'danger')
-            #     # 因为是 AJAX 提交，flash 可能不会直接显示，需要前端配合或后端返回错误JSON
-            #     return jsonify({'success': False, 'message': '标题、分类和内容不能为空！'}), 400
+            if not title or not category or not content:
+                flash('标题、分类和内容不能为空！', 'danger')
+                # 因为是 AJAX 提交，flash 可能不会直接显示，需要前端配合或后端返回错误JSON
+                return jsonify({'success': False, 'message': '标题、分类和内容不能为空！'}), 400
 
             saved_image_paths = []
             if uploaded_recipe_images:
