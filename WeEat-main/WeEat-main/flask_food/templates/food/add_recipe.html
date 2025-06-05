@@ -1,0 +1,13 @@
+<!--P4: 发布新食谱/内容的表单页面-->
+
+{% extends 'base.html' %}
+{% block content %}
+<h2>Add Recipe</h2>
+<form method="post">
+    {{ form.hidden_tag() }}
+    {{ form.title.label }} {{ form.title(class="form-control") }}
+    {{ form.category.label }} {{ form.category(class="form-control") }}
+    {{ form.content.label }} {{ form.content(class="form-control", rows=5) }}
+    <button type="submit" class="btn btn-primary mt-2">Submit</button>
+</form>
+{% endblock %}

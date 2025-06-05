@@ -1,0 +1,77 @@
+<!-- app/food/templates/food/add_recipe.html -->
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block head_styles %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/add_recipe_form.css') }}">
+{% endblock head_styles %}
+
+{% block app_content %}
+    <div class="container mt-4">
+    <h2><i class="bi bi-journal-plus"></i> 发布新食谱</h2>
+    <hr>
+
+    <form method="POST" action="{{ url_for('food.add_recipe') }}" enctype="multipart/form-data" id="addRecipeForm">
+        {{ form.hidden_tag() if form and form.hidden_tag }} {# 如果使用 WTForms #}
+        {{ form.hidden_tag() }}
+        <div class="add-recipe-layout">
+            <!-- 左侧图片上传面板 -->
+             <div class="image-upload-panel">
+                <h4>上传食谱图片 (最多9张)</h4>
+                <div class="image-preview-grid" id="imagePreviewGrid">
+                    <!-- 图片预览将在这里动态添加 -->
+                    <div class="upload-slot add-image-button" id="addImageButton">
+                        <i class="bi bi-plus-circle-dotted"></i>
+                        <span>点击或拖拽添加图片</span>
+                    </div>
+                </div>
+                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                 <input type="file" id="imageUpload" name="recipe_images" multiple accept="image/jpeg, image/png, image/gif" style="display: none;">
+                 <small class="form-text text-muted">支持 JPG, PNG, GIF 格式。</small>
+            </div>
+
+            <!-- 右侧食谱详情面板 -->
+            <div class="recipe-details-panel">
+                <div class="mb-3">
+                    <label for="title" class="form-label">标题 <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="title" name="title" placeholder="例如：美味蒜蓉蒸生蚝" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="category" class="form-label">分类 <span class="text-danger">*</span></label>
+                    <select class="form-select" id="category" name="category" required>
+                        <option selected disabled value="">-- 选择分类 --</option>
+                        <option value="家常菜">家常菜</option>
+                        <option value="快手菜">快手菜</option>
+                        <option value="下饭菜">下饭菜</option>
+                        <option value="早餐">早餐</option>
+                        <option value="肉类">肉类</option>
+                        <option value="鱼虾海鲜">鱼虾海鲜</option>
+                        <option value="西餐">西餐</option>
+                        <option value="蛋类豆制品">蛋类豆制品</option>
+                        <option value="汤羹">汤羹</option>
+                        <option value="主食">主食</option>
+                        <option value="烘焙点心">烘焙点心</option>
+                        <option value="饮品">饮品</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="content" class="form-label">分享你的食谱奇遇... <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="content" name="content" rows="10" placeholder="食材、步骤、小贴士等..." required></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 publish-button"><i class="bi bi-check-circle"></i> 发布食谱</button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock app_content %}
+
+{% block body_scripts %}
+    {{ super() }}
+    <script src="{{ url_for('static', filename='js/add_recipe_form.js') }}"></script>
+{% endblock body_scripts %}

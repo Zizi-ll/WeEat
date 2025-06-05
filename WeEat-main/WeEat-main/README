@@ -1,0 +1,85 @@
+1、架构初览
+weEat/
+├── .venv/
+├── flask_food/
+│   ├── auth/ #用户认真的表单和路由
+│   │   ├── auth_forms.py
+│   │   └── auth_routes.py
+│   ├── food/ #美食食谱的表单和路由
+│   │   ├── food_forms.py
+│   │   └── food_routes.py
+│   ├── static/ #静态文件 图片统一存在子文件夹images
+│   │   ├── css/
+│   │   ├── images/
+│   │   └── js.js
+│   └── templates/ #前端 HTML 模板，按模块分类：管理员、用户认证（登录注册）、访问错误、food内容、用户个人管理
+│       ├── admin/
+│       │   └── review_dashboard.html
+│       ├── auth/
+│       │   ├── login.html
+│       │   ├── logout.html
+│       │   └── register.html
+│       ├── errors/
+│       │   ├── 403.html
+│       │   ├── 404.html
+│       │   └── 500.html
+│       ├── food/
+│       │   ├── add_recipe.html
+│       │   ├── browsePage.html
+│       │   └── recipeDetail.html
+│       └── user/
+│           ├── notification.html
+│           ├── profile.html
+│       └── base.html #基础模版
+│       └── index.html # P1框架
+│   ├──_init_.py #应用初始化
+│   ├──forms.py #表单 都没怎么写 前端同学加油
+│   ├──mainRoutes.py #主页面的路由 连接P1
+│   ├──models.py #数据库建模 SQLAlchemy需要将数据库的表映射为类
+├──migrations #存放迁移脚本
+├──.flaskenv #设置FLASK_APP变量
+├──config.py #配置环境文件（连接数据库）
+├──requirements.txt #项目需要的工具包
+├──run.py #应用启动文件
+
+2、数据库设计
+User 用户表
+字段：id, username, email, password_hash, role, bio, profile_picture_url, created_at, updated_at
+权限：通过 role 字段区分普通用户、管理员、版主。
+功能：
+可发布帖子（Post）
+可写评论（Comment）
+可接收和触发通知（Notification）
+可对帖子点赞、收藏（多对多）
+
+Post 帖子表（美食分享内容）
+字段：id, title, content_body, image_url, created_at, updated_at, is_published, view_count
+外键：author_id、category_id
+功能：
+属于某个分类（Category）
+被多个用户点赞、收藏
+被评论
+
+Category 分类表
+字段：id, name, description, created_at
+功能：
+对帖子进行分类，如“家常菜”“甜点”等
+
+Comment 评论表
+字段：id, text_content, created_at, updated_at, parent_id
+外键：author_id, post_id
+功能：
+支持父子结构，实现评论回复功能
+多级评论可通过 parent_id 表达层级
+
+Notification 通知表
+字段：id, recipient_id, actor_id, related_post_id, related_comment_id, notification_type, is_read, message
+功能：
+支持系统通知（如公告）、互动通知（如新评论、点赞）
+跟踪通知是否已读
+
+多对多关联表
+post_likes	用户点赞帖子	User ↔ Post
+post_favorites	用户收藏帖子	User ↔ Post
+
+
