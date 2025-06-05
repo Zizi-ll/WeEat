@@ -42,7 +42,7 @@ def index():
     食谱浏览页面
     """
     recipes = Post.query.order_by(Post.created_at.desc()).all()
-    return render_template('food/index.html', title='食谱浏览', recipes=recipes)
+    return render_template('food/favourites.html', title='我的收藏', recipes=recipes)
 
 @food_bp.route('/add_recipe', methods=['GET', 'POST'])
 @login_required

@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block app_content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">食谱浏览</h1>
+            {% if current_user.is_authenticated %}
+                <div class="mb-4">
+                    <a href="{{ url_for('food.add_recipe') }}" class="btn btn-success">
+                        <i class="bi bi-plus-circle"></i> 发布新食谱
+                    </a>
+                </div>
+            {% endif %}
+            
+            <div class="row">
+                {% if recipes %}
+                    {% for recipe in recipes %}
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                {% if recipe.image_url %}
+                                    <img src="{{ recipe.image_url }}" class="card-img-top" alt="{{ recipe.title }}">
+                                {% endif %}
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ recipe.title }}</h5>
+                                    <p class="card-text">{{ recipe.content_body[:100] }}...</p>
+                                    <a href="{{ url_for('food.recipe_detail', recipe_id=recipe.id) }}" class="btn btn-primary">查看详情</a>
+                                </div>
+                                <div class="card-footer text-muted">
+                                    作者: {{ recipe.author.username }} | 发布时间: {{ recipe.created_at.strftime('%Y-%m-%d') }}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            暂无食谱，快来发布第一个食谱吧！
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
