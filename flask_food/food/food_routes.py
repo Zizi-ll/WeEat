@@ -1,46 +1,37 @@
 # app/food/food_routes.py
+import os
+import json
+import uuid
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, jsonify
 from flask_login import login_required, current_user
-from .food_forms import RecipeForm
-from flask_food.models import Post, Category # 从 app.models 导入
-from flask_food import db
-import os
 from werkzeug.utils import secure_filename
-import uuid
-from flask import jsonify
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, SelectField, SubmitField, MultipleFileField
 from wtforms.validators import DataRequired, Length
 
+from flask_food import db
+from flask_food.models import Post, Category
 
 food_bp = Blueprint('food', __name__,
                     template_folder='templates',
                     static_folder='static',
                     static_url_path='/food/static')
 
-
-# 配置图片上传
 UPLOAD_FOLDER = 'static/uploads/recipes'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 class RecipeForm(FlaskForm):
     title = StringField('标题', validators=[DataRequired(), Length(min=2, max=150)])
-    category = SelectField('分类', choices=[...], validators=[DataRequired()]) # 把你的分类选项放这里
+    category = SelectField('分类', choices=[], validators=[DataRequired()])  # choices 运行时动态注入
     content = TextAreaField('内容', validators=[DataRequired()])
-    # 对于 AJAX 上传，我们不需要 FileField 在这里做主要验证，但可以保留
-    # recipe_images = MultipleFileField('食谱图片', validators=[FileAllowed(['jpg', 'png', 'jpeg', 'gif'], '只允许图片!')])
     submit = SubmitField('发布食谱')
 
 def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @food_bp.route('/recipes')
 @login_required
 def index():
-    """
-    食谱浏览页面
-    """
     recipes = Post.query.order_by(Post.created_at.desc()).all()
     return render_template('food/favourites.html', title='我的收藏', recipes=recipes)
 
@@ -48,23 +39,18 @@ def index():
 @login_required
 def add_recipe():
     form = RecipeForm()
-    if request.method == 'POST':
+    categories = Category.query.all()
+    form.category.choices = [(str(c.id), c.name) for c in categories]  # 填充分类
+
+    if form.validate_on_submit():
         try:
-            title = request.form.get('title')
-            category = request.form.get('category')
-            content = request.form.get('content')
-
-            # 获取上传的图片文件列表 (通过JS的 FormData append)
-            uploaded_recipe_images = request.files.getlist('recipe_images')
-
-            if not title or not category or not content:
-                flash('标题、分类和内容不能为空！', 'danger')
-                # 因为是 AJAX 提交，flash 可能不会直接显示，需要前端配合或后端返回错误JSON
-                return jsonify({'success': False, 'message': '标题、分类和内容不能为空！'}), 400
+            title = form.title.data
+            category_id = form.category.data  # 这里用 form.category.data，而不是 request.form.get()
+            content = form.content.data
+            uploaded_recipe_images = request.files.getlist('recipe_images[]')
 
             saved_image_paths = []
             if uploaded_recipe_images:
-                # 确保上传文件夹存在
                 upload_path_full = os.path.join(current_app.root_path, UPLOAD_FOLDER)
                 os.makedirs(upload_path_full, exist_ok=True)
 
@@ -74,69 +60,71 @@ def add_recipe():
                         extension = original_filename.rsplit('.', 1)[1].lower()
                         unique_filename = f"{uuid.uuid4().hex}.{extension}"
                         file_path_full = os.path.join(upload_path_full, unique_filename)
+                        file.save(file_path_full)
+                        saved_image_paths.append(f"uploads/recipes/{unique_filename}")
 
-                        try:
-                            file.save(file_path_full)
-                            # 存储相对路径，相对于 static 目录，或者你的应用根目录
-                            # 这里我们存储相对于 static 目录的路径，方便 url_for('static', ...)
-                            # 但数据库里存 UPLOAD_FOLDER 下的相对路径更通用
-                            saved_image_paths.append(os.path.join(UPLOAD_FOLDER.replace('static/', '', 1), unique_filename))
-                        except Exception as e:
-                            current_app.logger.error(f"Error saving file {unique_filename}: {e}")
-                            flash(f'保存图片 {original_filename} 时出错。', 'danger')
-                            return jsonify({'success': False, 'message': f'保存图片 {original_filename} 时出错。'}), 500
-                    elif file and file.filename != '':  # 如果有文件但类型不对
-                        flash(f'文件 "{file.filename}" 类型不允许。只允许 {", ".join(ALLOWED_EXTENSIONS)}。', 'warning')
+            category_object = Category.query.get(int(category_id))
+            if not category_object:
+                return jsonify({'success': False, 'message': '选择的分类不存在'}), 400
 
-            category_object = Category.query.filter_by(name=category).first()
-            title_from_form = request.form.get('title')
-            # 确保你从表单获取内容时，变量名可以是你自己定的，但传递给 Post 时要用模型字段名
-            text_content_from_form = request.form.get('content')  # 假设你的 textarea 的 name 是
             new_recipe = Post(
-                title=title_from_form,
+                title=title,
                 category=category_object,
-                content_body=text_content_from_form,
+                content_body=content,
                 author=current_user,
-                author_id=current_user.id
-                # author=current_user  # 或者 user_id=current_user.id
+                author_id=current_user.id,
+                image_paths=json.dumps(saved_image_paths)
             )
-            if saved_image_paths:
-                new_recipe.image_paths = saved_image_paths  # 使用我们定义的setter
+            db.session.add(new_recipe)
+            db.session.commit()
 
+            return jsonify({'success': True, 'redirect_url': url_for('food.recipe_detail', recipe_id=new_recipe.id)})
 
-                db.session.add(new_recipe)
-                db.session.commit()
-                flash('食谱已成功发布！', 'success')
-                # 对于 AJAX 请求，返回 JSON，包含重定向 URL
-                return jsonify(
-                    {'success': True, 'redirect_url': url_for('food.recipe_detail', recipe_id=new_recipe.id)})  # 假设有这个路由
         except Exception as e:
             db.session.rollback()
-            current_app.logger.error(f"Error adding recipe to DB: {e}")
-            flash('发布食谱时数据库出错，请稍后再试。', 'danger')
+            current_app.logger.error(f"Error adding recipe: {e}")
             return jsonify({'success': False, 'message': '发布食谱时数据库出错，请稍后再试。'}), 500
 
-        # GET 请求时
-    return render_template('food/add_recipe.html', title='发布新食谱',form=form)
+    return render_template('food/add_recipe.html', title='发布新食谱', form=form, categories=categories)
 
+def get_first_image_filename(image_paths_str):
+    if not image_paths_str:
+        return None
+    try:
+        paths = json.loads(image_paths_str) if not isinstance(image_paths_str, list) else image_paths_str
+        if isinstance(paths, list) and paths:
+            img_path = paths[0].replace('\\', '/')
+            if img_path.startswith('uploads/recipes/'):
+                img_path = img_path[len('uploads/recipes/'):]
+            return img_path
+    except Exception as e:
+        current_app.logger.error(f"解析图片路径错误: {e}")
+    return None
 
-@food_bp.route('/browsePage', endpoint='browsePage')  # 显式指定端点名
+@food_bp.route('/browsePage', endpoint='browsePage')
 @login_required
 def browse():
-    return render_template('food/browsePage.html', title='浏览美食')\
+    category_keyword = request.args.get('category', '').strip()
+    recipes = []
 
+    if category_keyword:
+        recipes = Post.query.join(Category).filter(Category.name.ilike(f"%{category_keyword}%")).order_by(Post.created_at.desc()).all()
+    else:
+        recipes = Post.query.order_by(Post.created_at.desc()).all()
 
+    for r in recipes:
+        r.image_filename = get_first_image_filename(r.image_paths)
 
-@food_bp.route('/recipe/<int:recipe_id>')  # 或者 '/post/<int:post_id>'
-def recipe_detail(recipe_id):  # 函数名是 recipe_detail，参数名是 recipe_id
-    # 根据 recipe_id 从数据库查询食谱/帖子
-    # 使用 post_id 作为参数名，与 url_for 中一致
-    # 如果你的模型是 Post，并且主键是 id
+    return render_template('food/browsePage.html',
+                           title='浏览美食',
+                           recipes=recipes,
+                           category_keyword=category_keyword)
+
+@food_bp.route('/recipe/<int:recipe_id>')
+def recipe_detail(recipe_id):
     recipe_or_post = Post.query.get_or_404(recipe_id)
-
-    # 假设你有一个模板叫 recipe_detail.html 或 post_detail.html
     return render_template(
-        'food/recipeDetail.html',  # 确保模板路径正确
+        'food/recipeDetail.html',
         title=recipe_or_post.title,
-        recipe=recipe_or_post  # 将查询到的对象传递给模板
+        recipe=recipe_or_post
     )

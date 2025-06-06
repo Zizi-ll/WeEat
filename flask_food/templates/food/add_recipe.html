@@ -28,7 +28,7 @@
                     </div>
                 </div>
                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                 <input type="file" id="imageUpload" name="recipe_images" multiple accept="image/jpeg, image/png, image/gif" style="display: none;">
+                 <input type="file" id="imageUpload" name="recipe_images[]" multiple accept="image/jpeg, image/png, image/gif" style="display: none;">
                  <small class="form-text text-muted">支持 JPG, PNG, GIF 格式。</small>
             </div>
 
@@ -43,19 +43,9 @@
                     <label for="category" class="form-label">分类 <span class="text-danger">*</span></label>
                     <select class="form-select" id="category" name="category" required>
                         <option selected disabled value="">-- 选择分类 --</option>
-                        <option value="家常菜">家常菜</option>
-                        <option value="快手菜">快手菜</option>
-                        <option value="下饭菜">下饭菜</option>
-                        <option value="早餐">早餐</option>
-                        <option value="肉类">肉类</option>
-                        <option value="鱼虾海鲜">鱼虾海鲜</option>
-                        <option value="西餐">西餐</option>
-                        <option value="蛋类豆制品">蛋类豆制品</option>
-                        <option value="汤羹">汤羹</option>
-                        <option value="主食">主食</option>
-                        <option value="烘焙点心">烘焙点心</option>
-                        <option value="饮品">饮品</option>
-                        <option value="其他">其他</option>
+                        {% for c in categories %}
+                            <option value="{{ c.id }}">{{ c.name }}</option>
+                        {% endfor %}
                     </select>
                 </div>
 
