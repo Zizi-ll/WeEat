@@ -40,28 +40,45 @@ def index():
 def add_recipe():
     form = RecipeForm()
     categories = Category.query.all()
-    form.category.choices = [(str(c.id), c.name) for c in categories]  # 填充分类
+    form.category.choices = [(str(c.id), c.name) for c in categories]
 
     if form.validate_on_submit():
         try:
             title = form.title.data
-            category_id = form.category.data  # 这里用 form.category.data，而不是 request.form.get()
+            category_id = form.category.data
             content = form.content.data
-            uploaded_recipe_images = request.files.getlist('recipe_images[]')
 
+            uploaded_recipe_images = request.files.getlist('recipe_images')
             saved_image_paths = []
-            if uploaded_recipe_images:
+
+            # 确保至少有一张图片上传
+            if not uploaded_recipe_images or not any(f.filename for f in uploaded_recipe_images):
+                saved_image_paths = ['uploads/recipes/default_recipe.jpg']
+            else:
                 upload_path_full = os.path.join(current_app.root_path, UPLOAD_FOLDER)
                 os.makedirs(upload_path_full, exist_ok=True)
 
                 for file in uploaded_recipe_images:
-                    if file and allowed_file(file.filename):
+                    if file and file.filename:  # 确保有文件名
                         original_filename = secure_filename(file.filename)
-                        extension = original_filename.rsplit('.', 1)[1].lower()
-                        unique_filename = f"{uuid.uuid4().hex}.{extension}"
-                        file_path_full = os.path.join(upload_path_full, unique_filename)
-                        file.save(file_path_full)
-                        saved_image_paths.append(f"uploads/recipes/{unique_filename}")
+                        # 更安全的扩展名获取方式
+                        if '.' in original_filename:
+                            extension = original_filename.rsplit('.', 1)[1].lower()
+                        else:
+                            extension = 'jpg'  # 默认扩展名
+                            original_filename = f"{original_filename}.{extension}"
+
+                        if extension in ALLOWED_EXTENSIONS:
+                            unique_filename = f"{uuid.uuid4().hex}.{extension}"
+                            file_path_full = os.path.join(upload_path_full, unique_filename)
+                            file.save(file_path_full)
+                            saved_image_paths.append(
+                                os.path.join(UPLOAD_FOLDER.replace('static/', '', 1), unique_filename))
+
+
+            # 如果没有成功保存任何图片，使用默认图片
+            if not saved_image_paths:
+                saved_image_paths = ['uploads/recipes/default_recipe.jpg']
 
             category_object = Category.query.get(int(category_id))
             if not category_object:
@@ -73,7 +90,7 @@ def add_recipe():
                 content_body=content,
                 author=current_user,
                 author_id=current_user.id,
-                image_paths=json.dumps(saved_image_paths)
+                image_paths=json.dumps(saved_image_paths)  # 确保保存为JSON字符串
             )
             db.session.add(new_recipe)
             db.session.commit()
@@ -82,24 +99,31 @@ def add_recipe():
 
         except Exception as e:
             db.session.rollback()
-            current_app.logger.error(f"Error adding recipe: {e}")
-            return jsonify({'success': False, 'message': '发布食谱时数据库出错，请稍后再试。'}), 500
+            current_app.logger.error(f"Error adding recipe: {e}", exc_info=True)
+            return jsonify({'success': False, 'message': f'发布食谱时出错: {str(e)}'}), 500
 
     return render_template('food/add_recipe.html', title='发布新食谱', form=form, categories=categories)
 
 def get_first_image_filename(image_paths_str):
     if not image_paths_str:
-        return None
+        return 'default_recipe.jpg'  # 返回默认图片
     try:
-        paths = json.loads(image_paths_str) if not isinstance(image_paths_str, list) else image_paths_str
-        if isinstance(paths, list) and paths:
+        # 处理不同类型的输入
+        if isinstance(image_paths_str, str):
+            paths = json.loads(image_paths_str) if image_paths_str.startswith('[') else [image_paths_str]
+        elif isinstance(image_paths_str, list):
+            paths = image_paths_str
+        else:
+            paths = []
+
+        if paths:
             img_path = paths[0].replace('\\', '/')
             if img_path.startswith('uploads/recipes/'):
                 img_path = img_path[len('uploads/recipes/'):]
             return img_path
     except Exception as e:
         current_app.logger.error(f"解析图片路径错误: {e}")
-    return None
+    return 'default_recipe.jpg'  # 确保总是返回一个默认值
 
 @food_bp.route('/browsePage', endpoint='browsePage')
 @login_required
