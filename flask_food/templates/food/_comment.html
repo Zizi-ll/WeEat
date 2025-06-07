@@ -1,0 +1,46 @@
+<!-- templates/food/_comment.html -->
+<div class="comment mb-4" id="comment-{{ comment.id }}">
+    <div class="d-flex">
+        <!-- 用户头像 -->
+        <div class="flex-shrink-0">
+            <img src="{{ url_for('static', filename=comment.author.profile_picture_url or 'images/default_avatar.jpg') }}"
+                 class="rounded-circle" width="50" height="50" alt="{{ comment.author.username }}">
+        </div>
+        <!-- 评论内容 -->
+        <div class="flex-grow-1 ms-3">
+            <div class="comment-header mb-1">
+                <strong>{{ comment.author.username }}</strong>
+                <small class="text-muted ms-2">{{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+            </div>
+            <div class="comment-body mb-1">
+                {{ comment.text_content.replace('\n', '<br>') | safe }}
+            </div>
+            <!-- 回复链接 -->
+            {% if current_user.is_authenticated %}
+            <div class="comment-actions mb-2">
+                <a href="#" class="reply-link text-decoration-none text-primary small" data-comment-id="{{ comment.id }}">回复</a>
+            </div>
+            <!-- 回复表单 -->
+            <div class="reply-form mt-2" id="replyForm-{{ comment.id }}" style="display: none;">
+                <form class="reply-comment-form">
+                    <input type="hidden" name="parent_id" value="{{ comment.id }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="input-group">
+                        <textarea class="form-control" name="comment" rows="2" placeholder="写下你的回复..." required></textarea>
+                        <button class="btn btn-sm btn-outline-primary" type="submit">回复</button>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
+
+            <!-- 子评论列表 -->
+            {% if comment.replies %}
+            <div class="replies mt-3 ms-4 border-start ps-3">
+                {% for reply in comment.replies|sort(attribute='created_at') %}
+                    {% include 'food/_comment.html' with context %}
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>

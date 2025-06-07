@@ -1,0 +1,94 @@
+/* 食谱详情页样式 */
+.recipe-header {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+.recipe-images .main-image img {
+    max-height: 500px;
+    width: 100%;
+    object-fit: cover;
+}
+
+.thumbnail-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.thumbnail-container .img-thumbnail {
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.thumbnail-container .img-thumbnail:hover {
+    transform: scale(1.05);
+}
+
+.recipe-info-card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.recipe-info-card h6 {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.content-text {
+    line-height: 1.8;
+    font-size: 1.1rem;
+}
+
+/* 点赞和收藏按钮 */
+.action-buttons .btn {
+    min-width: 100px;
+}
+
+.action-buttons .btn i {
+    margin-right: 5px;
+}
+
+/* 评论区域 */
+.comment-section {
+    margin-top: 30px;
+}
+
+.comment {
+    border-left: 3px solid #eee;
+    padding-left: 15px;
+    margin-bottom: 20px;
+}
+
+.comment-header {
+    margin-bottom: 5px;
+}
+
+.comment-body {
+    margin-bottom: 10px;
+}
+
+.comment-actions {
+    font-size: 0.9rem;
+}
+
+.comment-actions a {
+    color: #6c757d;
+    text-decoration: none;
+    margin-right: 10px;
+}
+
+.comment-actions a:hover {
+    color: #0d6efd;
+}
+
+.replies {
+    border-left: 2px solid #f0f0f0;
+    padding-left: 15px;
+}
+
+.reply-form {
+    background-color: #f9f9f9;
+    padding: 10px;
+    border-radius: 5px;
+}

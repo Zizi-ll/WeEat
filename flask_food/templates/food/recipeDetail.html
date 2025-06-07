@@ -1,12 +1,375 @@
-<!--P5: 单个食谱/内容的详情页-->
+{% extends "base.html" %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% block title %}{{ recipe.title }}{% endblock %}
 
-</body>
-</html>
+{% block head_styles %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/recipe_detail.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css">
+{% endblock %}
+
+{% block app_content %}
+<div class="container mt-4">
+    <!-- 食谱标题和基本信息 -->
+    <div class="recipe-header mb-4">
+        <h1>{{ recipe.title }}</h1>
+        <div class="recipe-meta">
+            <span class="badge bg-primary">{{ recipe.category.name }}</span>
+            <span class="text-muted ms-2">
+                <i class="bi bi-person"></i> {{ recipe.author.username }}
+            </span>
+            <span class="text-muted ms-2">
+                <i class="bi bi-clock"></i> {{ recipe.created_at.strftime('%Y-%m-%d %H:%M') }}
+            </span>
+            <span class="text-muted ms-2">
+                <i class="bi bi-eye"></i> {{ recipe.view_count }} 次浏览
+            </span>
+        </div>
+    </div>
+
+    <!-- 点赞和收藏按钮 -->
+    <div class="action-buttons mb-4">
+        <button id="likeBtn" class="btn btn-outline-danger me-2">
+            <i class="bi bi-heart{% if current_user.is_authenticated and current_user in recipe.liked_by_users %}-fill{% endif %}"></i>
+            <span id="likeCount">{{ recipe.liked_by_users|length }}</span>
+        </button>
+
+        <button id="favoriteBtn" class="btn btn-outline-warning me-2">
+            <i class="bi bi-bookmark{% if current_user.is_authenticated and current_user in recipe.favorited_by_users %}-fill{% endif %}"></i>
+            <span id="favoriteCount">{{ recipe.favorited_by_users|length }}</span>
+        </button>
+
+        <button class="btn btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#commentSection">
+            <i class="bi bi-chat-left-text"></i> 评论 <span class="badge bg-secondary">{{ recipe.comments|length }}</span>
+        </button>
+    </div>
+
+    <!-- 食谱图片和内容 -->
+    <div class="row">
+        <!-- 食谱图片展示 -->
+        <div class="col-md-8">
+            <div class="recipe-images mb-4">
+                {% set images = recipe.image_paths %}
+                {% if images and images|length > 0 %}
+                    <div class="main-image">
+                        <img src="{{ url_for('static', filename=images[0]) }}" class="img-fluid rounded" alt="食谱主图">
+                    </div>
+                    {% if images|length > 1 %}
+                        <div class="thumbnail-container mt-3">
+                            {% for image in images %}
+                                <img src="{{ url_for('static', filename=image) }}" class="img-thumbnail" alt="食谱图片" style="max-height: 100px;">
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <img src="{{ url_for('static', filename='uploads/recipes/default_recipe.jpg') }}" class="img-fluid rounded" alt="默认图片">
+                {% endif %}
+            </div>
+
+            <!-- 食谱内容 -->
+            <div class="recipe-content">
+                <h4>食谱详情</h4>
+                <hr>
+                <div class="content-text">
+                    {{ recipe.content_body|replace('\n', '<br>')|safe }}
+                </div>
+            </div>
+        </div>
+
+        <!-- 食谱额外信息 -->
+        <div class="col-md-4">
+            <div class="card recipe-info-card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">食谱信息</h5>
+                    <hr>
+                    <div class="mb-3">
+                        <h6><i class="bi bi-person"></i> 作者</h6>
+                        <p>{{ recipe.author.username }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6><i class="bi bi-bookmark"></i> 分类</h6>
+                        <p>{{ recipe.category.name }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6><i class="bi bi-calendar"></i> 创建时间</h6>
+                        <p>{{ recipe.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6><i class="bi bi-heart"></i> 点赞数</h6>
+                        <p id="likeCountSide">{{ recipe.liked_by_users|length }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6><i class="bi bi-bookmark-star"></i> 收藏数</h6>
+                        <p id="favoriteCountSide">{{ recipe.favorited_by_users|length }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 作者信息 -->
+            <div class="card author-card">
+                <div class="card-body text-center">
+                    <img src="{{ url_for('static', filename=recipe.author.profile_picture_url) if recipe.author.profile_picture_url else url_for('static', filename='images/default_avatar.jpg') }}"
+                         class="rounded-circle mb-3" width="100" height="100" alt="{{ recipe.author.username }}">
+                    <h5>{{ recipe.author.username }}</h5>
+                    <p class="text-muted">{{ recipe.author.bio or '这个用户还没有个人简介' }}</p>
+                    <a href="{{ url_for('auth.profile', username=recipe.author.username) }}" class="btn btn-outline-primary btn-sm">查看主页</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 评论区域 -->
+    <div class="comment-section mt-4">
+        <div class="collapse show" id="commentSection">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">评论 <span class="badge bg-secondary">{{ recipe.comments|length }}</span></h5>
+
+                    <!-- 评论表单 -->
+                    {% if current_user.is_authenticated %}
+                    <form id="commentForm" class="mb-4">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="form-group">
+                            <textarea class="form-control" name="comment" rows="3" placeholder="写下你的评论..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary mt-2">提交评论</button>
+                    </form>
+                    {% else %}
+                    <div class="alert alert-info">
+                        请<a href="{{ url_for('auth.login') }}">登录</a>后发表评论
+                    </div>
+                    {% endif %}
+
+                    <!-- 评论列表 -->
+                    <div id="commentsList">
+                        {% for comment in recipe.comments|sort(attribute='created_at') if not comment.parent %}
+                            {% include 'food/_comment.html' %}
+                        {% else %}
+                            <p class="text-muted">暂无评论</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 返回按钮 -->
+    <div class="mt-4">
+        <a href="{{ url_for('food.browsePage') }}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left"></i> 返回食谱列表
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block body_scripts %}
+    {{ super() }}
+    <script>
+        // 点赞功能
+        document.getElementById('likeBtn').addEventListener('click', function() {
+            {% if not current_user.is_authenticated %}
+                window.location.href = "{{ url_for('auth.login') }}";
+                return;
+            {% endif %}
+
+            fetch("{{ url_for('food.like_recipe', recipe_id=recipe.id) }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const icon = this.querySelector('i');
+                    const countSpan = this.querySelector('span');
+                    const sideCount = document.getElementById('likeCountSide');
+
+                    if (data.action === 'liked') {
+                        icon.classList.remove('bi-heart');
+                        icon.classList.add('bi-heart-fill');
+                    } else {
+                        icon.classList.remove('bi-heart-fill');
+                        icon.classList.add('bi-heart');
+                    }
+                    countSpan.textContent = data.likes_count;
+                    sideCount.textContent = data.likes_count;
+                }
+            });
+        });
+
+        // 收藏功能
+        document.getElementById('favoriteBtn').addEventListener('click', function() {
+            {% if not current_user.is_authenticated %}
+                window.location.href = "{{ url_for('auth.login') }}";
+                return;
+            {% endif %}
+
+            fetch("{{ url_for('food.favorite_recipe', recipe_id=recipe.id) }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const icon = this.querySelector('i');
+                    const countSpan = this.querySelector('span');
+                    const sideCount = document.getElementById('favoriteCountSide');
+
+                    if (data.action === 'favorited') {
+                        icon.classList.remove('bi-bookmark');
+                        icon.classList.add('bi-bookmark-fill');
+                    } else {
+                        icon.classList.remove('bi-bookmark-fill');
+                        icon.classList.add('bi-bookmark');
+                    }
+                    countSpan.textContent = data.favorites_count;
+                    sideCount.textContent = data.favorites_count;
+                }
+            });
+        });
+
+        // 评论功能
+        {% if current_user.is_authenticated %}
+        document.getElementById('commentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+
+            fetch("{{ url_for('food.add_comment', recipe_id=recipe.id) }}", {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 清空表单
+                    this.reset();
+
+                    // 创建新评论元素并添加到列表
+                    const commentHtml = `
+                        <div class="comment mb-3" id="comment-${data.comment_id}">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <img src="${data.author_avatar}" class="rounded-circle" width="50" height="50" alt="${data.author_name}">
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <div class="comment-header">
+                                        <strong>${data.author_name}</strong>
+                                        <small class="text-muted ms-2">${data.created_at}</small>
+                                    </div>
+                                    <div class="comment-body">
+                                        ${data.content.replace(/\n/g, '<br>')}
+                                    </div>
+                                    <div class="comment-actions">
+                                        <a href="#" class="reply-link" data-comment-id="${data.comment_id}">回复</a>
+                                    </div>
+                                    <div class="reply-form mt-2" id="replyForm-${data.comment_id}" style="display: none;">
+                                        <form class="reply-comment-form">
+                                            <input type="hidden" name="parent_id" value="${data.comment_id}">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <div class="input-group">
+                                                <textarea class="form-control" name="comment" rows="2" placeholder="写下你的回复..." required></textarea>
+                                                <button class="btn btn-primary" type="submit">回复</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    const commentsList = document.getElementById('commentsList');
+                    if (commentsList.querySelector('.text-muted')) {
+                        commentsList.innerHTML = commentHtml;
+                    } else {
+                        commentsList.insertAdjacentHTML('afterbegin', commentHtml);
+                    }
+
+                    // 更新评论数量
+                    const commentCountBadge = document.querySelector('.comment-section .badge');
+                    commentCountBadge.textContent = parseInt(commentCountBadge.textContent) + 1;
+
+                    // 添加回复事件监听
+                    setupReplyLinks();
+                }
+            });
+        });
+        {% endif %}
+
+        // 设置回复链接事件
+        function setupReplyLinks() {
+            document.querySelectorAll('.reply-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const commentId = this.getAttribute('data-comment-id');
+                    const replyForm = document.getElementById(`replyForm-${commentId}`);
+                    replyForm.style.display = replyForm.style.display === 'none' ? 'block' : 'none';
+                });
+            });
+
+            // 回复表单提交
+            document.querySelectorAll('.reply-comment-form').forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const formData = new FormData(this);
+                    const commentId = this.querySelector('input[name="parent_id"]').value;
+
+                    fetch("{{ url_for('food.add_comment', recipe_id=recipe.id) }}", {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // 清空表单并隐藏
+                            this.reset();
+                            this.parentElement.style.display = 'none';
+
+                            // 创建回复元素并添加到回复列表
+                            const replyHtml = `
+                                <div class="comment mb-3" id="comment-${data.comment_id}">
+                                    <div class="d-flex">
+                                        <div class="flex-shrink-0">
+                                            <img src="${data.author_avatar}" class="rounded-circle" width="50" height="50" alt="${data.author_name}">
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <div class="comment-header">
+                                                <strong>${data.author_name}</strong>
+                                                <small class="text-muted ms-2">${data.created_at}</small>
+                                            </div>
+                                            <div class="comment-body">
+                                                ${data.content.replace(/\n/g, '<br>')}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+
+                            const commentDiv = document.getElementById(`comment-${commentId}`);
+                            let repliesDiv = commentDiv.querySelector('.replies');
+
+                            if (!repliesDiv) {
+                                repliesDiv = document.createElement('div');
+                                repliesDiv.className = 'replies mt-3 ms-3';
+                                commentDiv.querySelector('.flex-grow-1').appendChild(repliesDiv);
+                            }
+
+                            repliesDiv.insertAdjacentHTML('beforeend', replyHtml);
+
+                            // 更新评论数量
+                            const commentCountBadge = document.querySelector('.comment-section .badge');
+                            commentCountBadge.textContent = parseInt(commentCountBadge.textContent) + 1;
+                        }
+                    });
+                });
+            });
+        }
+
+        // 初始化回复链接事件
+        setupReplyLinks();
+    </script>
+{% endblock %}

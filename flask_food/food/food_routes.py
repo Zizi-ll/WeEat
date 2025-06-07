@@ -10,7 +10,8 @@ from wtforms import StringField, TextAreaField, SelectField, SubmitField, Multip
 from wtforms.validators import DataRequired, Length
 
 from flask_food import db
-from flask_food.models import Post, Category
+from flask_food.models import Post, Category, Notification
+from flask_food.models import Comment
 
 food_bp = Blueprint('food', __name__,
                     template_folder='templates',
@@ -144,11 +145,135 @@ def browse():
                            recipes=recipes,
                            category_keyword=category_keyword)
 
+
 @food_bp.route('/recipe/<int:recipe_id>')
 def recipe_detail(recipe_id):
-    recipe_or_post = Post.query.get_or_404(recipe_id)
+    recipe = Post.query.get_or_404(recipe_id)
+
+    # 统一处理图片路径
+    if recipe.image_paths:
+        try:
+            if isinstance(recipe.image_paths, str):
+                paths = json.loads(recipe.image_paths)
+            else:
+                paths = recipe.image_paths
+
+            # 标准化所有路径
+            processed_paths = []
+            for path in paths:
+                # 替换反斜杠，移除重复的uploads/recipes
+                clean_path = path.replace('\\', '/').replace('uploads/recipes/uploads/recipes', 'uploads/recipes')
+                if not clean_path.startswith('uploads/recipes/'):
+                    clean_path = f"uploads/recipes/{clean_path}"
+                processed_paths.append(clean_path)
+
+            recipe.image_paths = processed_paths
+        except Exception as e:
+            current_app.logger.error(f"Error processing image paths: {e}")
+            recipe.image_paths = ['uploads/recipes/default_recipe.jpg']
+    else:
+        recipe.image_paths = ['uploads/recipes/default_recipe.jpg']
+
     return render_template(
         'food/recipeDetail.html',
-        title=recipe_or_post.title,
-        recipe=recipe_or_post
+        title=recipe.title,
+        recipe=recipe,
+        comments=Comment.query.filter_by(post_id=recipe_id).order_by(Comment.created_at).all()
     )
+
+# 添加以下路由到 food_routes.py
+
+@food_bp.route('/recipe/<int:recipe_id>/like', methods=['POST'])
+@login_required
+def like_recipe(recipe_id):
+    recipe = Post.query.get_or_404(recipe_id)
+    if current_user in recipe.liked_by_users:
+        # 已经点赞，执行取消点赞
+        recipe.liked_by_users.remove(current_user)
+        action = 'unliked'
+    else:
+        # 未点赞，执行点赞
+        recipe.liked_by_users.append(current_user)
+        action = 'liked'
+
+    db.session.commit()
+
+    # 返回点赞数和当前状态
+    return jsonify({
+        'success': True,
+        'action': action,
+        'likes_count': len(recipe.liked_by_users)
+    })
+
+@food_bp.route('/recipe/<int:recipe_id>/favorite', methods=['POST'])
+@login_required
+def favorite_recipe(recipe_id):
+    recipe = Post.query.get_or_404(recipe_id)
+    if current_user in recipe.favorited_by_users:
+        # 已经收藏，执行取消收藏
+        recipe.favorited_by_users.remove(current_user)
+        action = 'unfavorited'
+    else:
+        # 未收藏，执行收藏
+        recipe.favorited_by_users.append(current_user)
+        action = 'favorited'
+
+    db.session.commit()
+
+    # 返回收藏数和当前状态
+    return jsonify({
+        'success': True,
+        'action': action,
+        'favorites_count': len(recipe.favorited_by_users)
+    })
+
+@food_bp.route('/recipe/<int:recipe_id>/comment', methods=['POST'])
+@login_required
+def add_comment(recipe_id):
+    recipe = Post.query.get_or_404(recipe_id)
+    comment_content = request.form.get('comment', '').strip()
+
+    if not comment_content:
+        return jsonify({'success': False, 'message': '评论内容不能为空'}), 400
+
+    try:
+        parent_id = request.form.get('parent_id')
+        parent_comment = Comment.query.get(parent_id) if parent_id else None
+
+        new_comment = Comment(
+            text_content=comment_content,
+            author=current_user,
+            post=recipe,
+            parent=parent_comment
+        )
+
+        db.session.add(new_comment)
+        db.session.commit()
+
+        # 创建通知（如果不是回复自己的评论）
+        if parent_comment and parent_comment.author_id != current_user.id:
+            notification = Notification(
+                recipient_id=parent_comment.author_id,
+                actor_id=current_user.id,
+                related_post_id=recipe.id,
+                related_comment_id=new_comment.id,
+                notification_type='reply',
+                message=f"{current_user.username} 回复了你的评论"
+            )
+            db.session.add(notification)
+            db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'comment_id': new_comment.id,
+            'author_name': current_user.username,
+            'author_avatar': current_user.profile_picture_url or url_for('static',
+                                                                         filename='images/default_avatar.jpg'),
+            'created_at': new_comment.created_at.strftime('%Y-%m-%d %H:%M'),
+            'content': new_comment.text_content
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error adding comment: {e}")
+        return jsonify({'success': False, 'message': '添加评论失败'}), 500
