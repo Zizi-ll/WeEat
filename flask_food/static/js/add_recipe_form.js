@@ -1,5 +1,6 @@
-document.addEventListener('DOMContentLoaded', function () {
 
+
+document.addEventListener('DOMContentLoaded', function () {
     const imageUploadInput = document.getElementById('imageUpload');
     const imagePreviewGrid = document.getElementById('imagePreviewGrid');
     const addImageButtonSlot = document.getElementById('addImageButton');
@@ -114,6 +115,13 @@ document.addEventListener('DOMContentLoaded', function () {
     const recipeForm = document.getElementById('addRecipeForm');
     if (recipeForm) {
         recipeForm.addEventListener('submit', function(event) {
+            const submitButton = recipeForm.querySelector('button[type="submit"]'); // 或者给按钮一个 ID
+            let originalButtonText = '';
+            if (submitButton) {
+                originalButtonText = submitButton.innerHTML;
+                submitButton.disabled = true;
+                submitButton.innerHTML = '发布中...'; // 或者类似的加载提示
+            }
             event.preventDefault(); // 阻止默认提交，我们手动构建 FormData
 
             const formData = new FormData(recipeForm); // 获取表单中的文本数据
@@ -145,18 +153,23 @@ document.addEventListener('DOMContentLoaded', function () {
                     body: formData,
                 };
 
+                const headers = {};
                 if (csrfToken) {
-                    fetchOptions.headers = {
-                        'X-CSRFToken': csrfToken // Flask-WTF 通常期望这个头部名称
-                    };
+                    headers['X-CSRFToken'] = csrfToken;
                 }
 
             fetch(recipeForm.action, {
                     method: 'POST',
                     body: formData,
-                    // headers: { 'X-CSRFToken': '...' } // 如果需要
+                    headers:headers
                 })
                 .then(response => {
+                    if (!response.ok) {
+                        // 如果服务器返回非2xx状态码，尝试解析为文本错误
+                        return response.text().then(text => {
+                            throw new Error(`服务器错误: ${response.status} - ${text || response.statusText}`);
+                        });
+                    }
                     const contentType = response.headers.get("content-type");
                     if (response.ok) {
                         if (response.redirected) {
@@ -210,15 +223,25 @@ document.addEventListener('DOMContentLoaded', function () {
                         // 如果没有 redirect_url，可能需要在这里做其他操作，比如清空表单
                     } else if (data) { // 如果data存在但没有明确的成功/重定向指令
                         console.warn('Received data from server with unclear instructions:', data);
+                        form.reset(); // 例如，清空表单
+                        document.getElementById('imagePreviewGrid').innerHTML = `
+                            <div class="upload-slot add-image-button" id="addImageButton">
+                                <i class="bi bi-plus-circle-dotted"></i>
+                                <span>点击或拖拽添加图片</span>
+                            </div>`; // 重置图片预览
+                    } else {
+                        alert('错误: ' + (data.message || '提交失败，请检查表单并重试。'));
                     }
-                    // 如果 Promise.reject('redirected') 被调用，这个 .then 不会执行
                 })
-                .catch(error => {
-                    if (error === 'redirected') { // 这是我们自己reject的，不算真正的错误
-                        return;
+                 .catch(error => {
+                    console.error('提交食谱时发生网络或解析错误:', error);
+                    alert('提交过程中发生错误: ' + error.message);
+                })
+                .finally(() => {
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                        submitButton.innerHTML = originalButtonText;
                     }
-                    console.error('Fetch Error:', error);
-                    alert('发布食谱时发生错误: ' + error.message);
                 });
         });
     }

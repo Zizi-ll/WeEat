@@ -1,0 +1,118 @@
+<!-- app/food/templates/food/admin_review_recipe_detail.html -->
+{% extends "base.html" %}
+{# {% from "_formhelpers.html" import render_field %} #} <!-- 如果你有表单助手宏 -->
+
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block head_styles %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/recipe_detail.css') }}"> <!-- 如果适用，可以复用 -->
+    <style>
+        .image-gallery-admin img {
+            max-width: 180px; /* 调整图片大小 */
+            margin: 5px;
+            border: 1px solid #ccc;
+            border-radius: 0.25rem;
+            object-fit: cover;
+            height: 120px; /* 固定高度 */
+        }
+        .review-form-container {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+        }
+        .content-body-display {
+            white-space: pre-wrap; /* 保留换行和空格 */
+            background-color: #fdfdfd;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+{% endblock head_styles %}
+
+{% block app_content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('food.admin_review_dashboard') }}">审核仪表盘</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ recipe.title | truncate(30) }}</li>
+        </ol>
+    </nav>
+
+    <h2><i class="bi bi-pencil-square"></i> {{ title }}</h2>
+    <hr>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            食谱详细信息
+        </div>
+        <div class="card-body">
+            <h3 class="card-title">{{ recipe.title }}</h3>
+            <p class="card-text"><small class="text-muted">作者: {{ recipe.author.username }} | 分类: {{ recipe.category.name if recipe.category else '未分类' }} | 提交时间: {{ recipe.created_at.strftime('%Y-%m-%d %H:%M') }}</small></p>
+
+            <h4><i class="bi bi-images"></i> 食谱图片:</h4>
+            <div class="image-gallery-admin d-flex flex-wrap mb-3 p-2 bg-light border rounded">
+                {% if recipe.processed_image_paths and recipe.processed_image_paths[0] != 'uploads/recipes/default_recipe.jpg' %}
+                    {% for image_path in recipe.processed_image_paths %}
+                         <img src="{{ url_for('static', filename=image_path) }}" alt="食谱图片 - {{ loop.index }}" class="img-thumbnail m-1">
+                    {% endfor %}
+                {% elif recipe.processed_image_paths and recipe.processed_image_paths[0] == 'uploads/recipes/default_recipe.jpg' %}
+                     <img src="{{ url_for('static', filename='uploads/recipes/default_recipe.jpg') }}" alt="默认图片" class="img-thumbnail m-1">
+                     <p class="ms-2 align-self-center text-muted"><small>用户未上传图片或图片处理失败，显示默认图。</small></p>
+                {% else %}
+                    <p class="ms-2 text-muted"><small>此食谱没有图片。</small></p>
+                {% endif %}
+            </div>
+
+            <h4><i class="bi bi-file-text"></i> 食谱内容:</h4>
+            <div class="content-body-display">
+                {{ recipe.content_body }} {# 直接输出，后端已确保内容安全 #}
+            </div>
+        </div>
+    </div>
+
+    {% if recipe.status == 'pending_review' %}
+    <div class="review-form-container card">
+        <div class="card-header bg-warning text-dark">
+            <i class="bi bi-check2-square"></i> 审核操作
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('food.admin_review_recipe_page', recipe_id=recipe.id) }}">
+                {{ form.hidden_tag() }} {# CSRF Token #}
+                <div class="mb-3">
+                    <label for="review_notes" class="form-label">{{ form.review_notes.label.text }}</label>
+                    {{ form.review_notes(class="form-control" + (" is-invalid" if form.review_notes.errors else ""), rows=3, placeholder="如果选择“拒绝发布”，请在此处填写原因...") }}
+                    {% if form.review_notes.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.review_notes.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="d-flex justify-content-end gap-2">
+                    {{ form.submit_approve(class="btn btn-success") }}
+                    {{ form.submit_reject(class="btn btn-danger") }}
+                </div>
+            </form>
+        </div>
+    </div>
+    {% elif recipe.status == 'approved' %}
+        <div class="alert alert-success" role="alert"><i class="bi bi-check-circle-fill"></i> 此食谱已于 {{ recipe.updated_at.strftime('%Y-%m-%d %H:%M') }} 审核通过并发布。</div>
+    {% elif recipe.status == 'rejected' %}
+        <div class="alert alert-danger" role="alert"><i class="bi bi-x-circle-fill"></i> 此食谱已于 {{ recipe.updated_at.strftime('%Y-%m-%d %H:%M') }} 被拒绝。</div>
+        {% if recipe.review_notes %}
+        <div class="card mt-3">
+            <div class="card-header">拒绝原因:</div>
+            <div class="card-body bg-light">
+                <p style="white-space: pre-wrap;">{{ recipe.review_notes }}</p>
+            </div>
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock app_content %}

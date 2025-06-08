@@ -1,6 +1,5 @@
 # 应用工厂函数，初始化Flask应用和扩展
 import os
-
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -52,7 +51,8 @@ def create_app(config_class=Config):
     # from app.main.routes import main_bp
     # app.register_blueprint(main_bp)
 
-    from . import models  # 确保 models 被导入，Flask-Migrate 才能检测到
+    from . import models
+    # 确保 models 被导入，Flask-Migrate 才能检测到
     @login_manager.user_loader
     def load_user(user_id):
         return models.User.query.get(int(user_id))  # 使用 models.User

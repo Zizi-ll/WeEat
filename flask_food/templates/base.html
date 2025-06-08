@@ -181,6 +181,13 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    {% if current_user.is_authenticated and current_user.role == 'admin' %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('food.admin_review_dashboard') }}">
+                                <i class="bi bi-shield-check"></i> 食谱审核
+                            </a>
+                        </li>
+                    {% endif %}
                         <li class="nav-item position-relative">
                             <a class="nav-link {% if request.endpoint == 'main.index' %}active{% endif %}" aria-current="page" href="{{ url_for('main.index') }}">
                                 首页

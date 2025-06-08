@@ -149,11 +149,11 @@
                 <div class="card mb-3" style="max-width: 740px;">
                     <div class="row g-0">
                         <div class="col-md-4">
-                            {% if recipe.image_filename %}
-                                <img src="{{ url_for('static', filename='uploads/recipes/' ~ recipe.image_filename) }}"
+                            {% if recipe.first_image_display_path %}
+                               <img src="{{ url_for('static', filename=recipe.first_image_display_path) }}"
                                     class="img-fluid rounded-start" alt="食谱图片">
-                            {% else %}
-                                <img src="{{ url_for('static', filename='uploads/recipes/default_recipe.jpg') }}"
+                            {% else %} {# 理论上 first_image_display_path 总会有一个默认值，这个 else 可能不需要 #}
+                               <img src="{{ url_for('static', filename='uploads/recipes/default_recipe.jpg') }}"
                                     class="img-fluid rounded-start" alt="默认图片">
                             {% endif %}
                         </div>

@@ -98,9 +98,11 @@ class Post(db.Model):
     image_paths_json = db.Column(db.Text, nullable=True) # 将存储图片的相对路径
     created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow, index=True)
     updated_at = db.Column(db.DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
-    is_published = db.Column(db.Boolean, default=True)
+    is_published = db.Column(db.Boolean, default=False)
     view_count = db.Column(db.Integer, default=0)
-
+    status = db.Column(db.String(20), default='pending_review', nullable=False,
+                       index=True)  # 可选值: 'pending_review' (待审核), 'approved' (已批准), 'rejected' (已拒绝), 'draft' (草稿)
+    review_notes = db.Column(db.Text, nullable=True)  # 管理员拒绝时的审核意见
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=True)
 
@@ -113,7 +115,23 @@ class Post(db.Model):
     @property
     def image_paths(self):
         if self.image_paths_json:
-            return json.loads(self.image_paths_json)
+            print(f"DEBUG MODELS: Raw image_paths_json from DB: '{self.image_paths_json}'")
+            try:
+                loaded_data = json.loads(self.image_paths_json)
+                print(f"DEBUG MODELS: json.loads result: {loaded_data}, type: {type(loaded_data)}")
+                # 如果 loaded_data 仍然是字符串，并且看起来像一个列表的字符串表示，尝试再次解析
+                if isinstance(loaded_data, str) and loaded_data.startswith('[') and loaded_data.endswith(']'):
+                    print(f"DEBUG MODELS: Attempting secondary parse on string: '{loaded_data}'")
+                    try:
+                        loaded_data = json.loads(loaded_data)
+                        print(f"DEBUG MODELS: Secondary parse result: {loaded_data}, type: {type(loaded_data)}")
+                    except json.JSONDecodeError as e2:
+                        print(f"DEBUG MODELS: Secondary JSONDecodeError: {e2}")
+                        return []  # 或者其他错误处理
+                return loaded_data
+            except json.JSONDecodeError as e:
+                print(f"DEBUG MODELS: Primary JSONDecodeError: {e}")
+                return []  # 解析失败返回空列表
         return []
 
     @image_paths.setter

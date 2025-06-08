@@ -92,3 +92,21 @@
     padding: 10px;
     border-radius: 5px;
 }
+
+.main-image img {
+    width: 100%; /* 确保它填满容器宽度 */
+    max-height: 500px; /* 限制一个最大高度，防止过高 */
+    object-fit: cover; /* 保持宽高比，裁剪多余部分，或者用 contain */
+}
+
+.thumbnail-container .img-thumbnail {
+    width: 100px; /* 或者你希望的宽度 */
+    height: 75px; /* 或者你希望的高度 */
+    object-fit: cover; /* 保持宽高比，裁剪填充 */
+    margin: 5px; /* 添加一些间距 */
+    cursor: pointer;
+}
+.thumbnail-container {
+    display: flex; /* 让缩略图水平排列 */
+    flex-wrap: wrap; /* 如果一行放不下就换行 */
+}

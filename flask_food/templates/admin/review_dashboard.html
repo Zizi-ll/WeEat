@@ -1,12 +1,85 @@
-<!--P7: 管理员审核内容的仪表盘-->
+<!-- app/food/templates/food/review_dashboard.html -->
+{% extends "base.html" %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% block title %}{{ title }}{% endblock %}
 
-</body>
-</html>
+{% block head_styles %}
+    {{ super() }}
+    <style>
+        .recipe-card-admin-item {
+            border: 1px solid #ddd;
+            margin-bottom: 15px;
+            border-radius: 0.25rem;
+        }
+        .recipe-card-admin-item .card-body {
+            padding: 1.25rem;
+        }
+        .recipe-card-admin-item img {
+            max-width: 120px; /* 调整图片大小 */
+            max-height: 120px;
+            object-fit: cover;
+            border-radius: 3px;
+            margin-right: 15px; /* 图片和文字间距 */
+        }
+        .recipe-details {
+            flex-grow: 1; /* 让文字内容占据剩余空间 */
+        }
+    </style>
+{% endblock head_styles %}
+
+{% block app_content %}
+<div class="container mt-4">
+    <h2><i class="bi bi-clipboard2-check-fill"></i> {{ title }}</h2>
+    <hr>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {% if recipes %}
+        <p>以下食谱等待您的审核：</p>
+        <div class="list-group">
+            {% for recipe in recipes %}
+            <div class="card recipe-card-admin-item">
+                <div class="card-body d-flex align-items-center"> <!-- 使用 flex 布局对齐图片和内容 -->
+                    {% if recipe.first_image_display_path and recipe.first_image_display_path != 'uploads/recipes/default_recipe.jpg' %}
+                        <img src="{{ url_for('static', filename=recipe.first_image_display_path) }}" alt="{{ recipe.title }}" class="img-thumbnail">
+                    {% elif recipe.first_image_display_path == 'uploads/recipes/default_recipe.jpg' %}
+                         <img src="{{ url_for('static', filename='uploads/recipes/default_recipe.jpg') }}" alt="默认食谱图片" class="img-thumbnail">
+                    {% else %}
+                        <div style="width:120px; height:120px; background-color:#eee; display:flex; align-items:center; justify-content:center; margin-right:15px;" class="text-muted">无图</div>
+                    {% endif %}
+
+                    <div class="recipe-details">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">{{ recipe.title }}</h5>
+                            <small class="text-muted">提交于: {{ recipe.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                        </div>
+                        <p class="mb-1"><small>作者: {{ recipe.author.username }} | 分类: {{ recipe.category.name if recipe.category else '未分类' }}</small></p>
+                        <p class="mb-1 text-muted">
+                            内容摘要: {{ recipe.content_body | striptags | truncate(100, True) }}
+                        </p>
+                        <div class="actions mt-2">
+                            <a href="{{ url_for('food.admin_review_recipe_page', recipe_id=recipe.id) }}" class="btn btn-sm btn-info">
+                                <i class="bi bi-search"></i> 查看详情并审核
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info" role="alert">
+            <i class="bi bi-info-circle-fill"></i> 当前没有等待审核的食谱。
+        </div>
+    {% endif %}
+</div>
+{% endblock app_content %}

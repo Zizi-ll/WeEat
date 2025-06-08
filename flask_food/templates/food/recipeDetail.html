@@ -49,15 +49,22 @@
         <!-- 食谱图片展示 -->
         <div class="col-md-8">
             <div class="recipe-images mb-4">
-                {% set images = recipe.image_paths %}
+                {% set images = recipe.processed_image_paths %}
+
                 {% if images and images|length > 0 %}
                     <div class="main-image">
                         <img src="{{ url_for('static', filename=images[0]) }}" class="img-fluid rounded" alt="食谱主图">
                     </div>
                     {% if images|length > 1 %}
                         <div class="thumbnail-container mt-3">
-                            {% for image in images %}
-                                <img src="{{ url_for('static', filename=image) }}" class="img-thumbnail" alt="食谱图片" style="max-height: 100px;">
+                             {% for image_path_for_thumbnail in images %}
+
+                                <img src="{{ url_for('static', filename=image_path_for_thumbnail) }}"
+                                     class="img-thumbnail"
+                                     alt="食谱图片 {{ loop.index }}" {# loop.index 可以用于 alt #}
+                                     style="max-height: 100px; cursor: pointer;" {# 添加 cursor: pointer 暗示可点击 #}
+
+                                     onclick="updateMainImage('{{ url_for('static', filename=image_path_for_thumbnail) }}')">
                             {% endfor %}
                         </div>
                     {% endif %}
@@ -165,6 +172,12 @@
 {% block body_scripts %}
     {{ super() }}
     <script>
+        function updateMainImage(newImageSrc) {
+            const mainImageElement = document.querySelector('.main-image img');
+            if (mainImageElement) {
+                mainImageElement.src = newImageSrc;
+            }
+        }
         // 点赞功能
         document.getElementById('likeBtn').addEventListener('click', function() {
             {% if not current_user.is_authenticated %}
