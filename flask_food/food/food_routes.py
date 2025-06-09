@@ -489,3 +489,13 @@ def toggle_favorite(post_id):
         'action': action,
         'favorites_count': len(post.favorited_by_users)
     })
+
+@food_bp.route('/delete_recipe/<int:recipe_id>', methods=['POST'])
+@login_required
+def delete_recipe(recipe_id):
+    recipe = Post.query.get_or_404(recipe_id)
+    if recipe.author_id != current_user.id:
+        return jsonify({'success': False, 'message': '无权删除他人食谱'}), 403
+    db.session.delete(recipe)
+    db.session.commit()
+    return jsonify({'success': True, 'message': '删除成功'})

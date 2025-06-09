@@ -11,18 +11,23 @@
                     <h2>{{ user.username }} 的个人主页</h2>
                 </div>
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <img src="{{ url_for('static', filename='images/default-avatar.png') }}"
-                                 class="img-fluid rounded-circle" alt="用户头像">
-                        </div>
-                        <div class="col-md-8">
-                            <h3>用户信息</h3>
-                            <p><strong>用户名：</strong> {{ user.username }}</p>
-                            <p><strong>邮箱：</strong> {{ user.email }}</p>
-                            <p><strong>注册时间：</strong> {{ user.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
-                        </div>
-                    </div>
+                    <h3>用户信息</h3>
+                    <p><strong>用户名：</strong> {{ user.username }}</p>
+                    <p><strong>邮箱：</strong> {{ user.email }}</p>
+                    <p><strong>注册时间：</strong> {{ user.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                    <hr>
+                    <h4>我已发布的食谱</h4>
+                    {% if published_posts %}
+                        <ul class="list-group">
+                        {% for post in published_posts %}
+                            <li class="list-group-item">
+                                <a href="{{ url_for('food.recipe_detail', recipe_id=post.id) }}">{{ post.title }}</a>
+                            </li>
+                        {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>暂无已发布的食谱。</p>
+                    {% endif %}
                 </div>
             </div>
         </div>

@@ -42,8 +42,8 @@ def register():
 @login_required # 通常个人主页需要登录
 def profile(username): # 函数名是 profile，参数名是 username
     user = User.query.filter_by(username=username).first_or_404()
-
-    return render_template('user/profile.html', title=f'{user.username}的主页', user=user)
+    published_posts = user.posts  # 获取该用户所有食谱
+    return render_template('user/profile.html', title=f'{user.username}的主页', user=user, published_posts=published_posts)
 
 
 @auth_bp.route('/logout')
