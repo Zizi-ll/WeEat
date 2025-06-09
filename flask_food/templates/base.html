@@ -196,7 +196,7 @@
                         </li>
                         <li class="nav-item position-relative">
                             <a class="nav-link {% if request.endpoint.startswith('food.') and request.endpoint != 'food.add_recipe' %}active{% endif %}" href="{{ url_for('food.index') }}">
-                                我的收藏
+                                我的发布
                                 {% if request.endpoint.startswith('food.') and request.endpoint != 'food.add_recipe' %}<span class="active-indicator"></span>{% endif %}
                             </a>
                         </li>
@@ -206,6 +206,14 @@
                                 {% if request.endpoint == 'food.browsePage' %}<span class="active-indicator"></span>{% endif %}
                             </a>
                         </li>
+
+                        <li class="nav-item position-relative">
+                            <a class="nav-link {% if request.endpoint == 'food.favorites' %}active{% endif %}"
+                                href="{{ url_for('food.favorites') }}">
+                                我的收藏
+                            </a>
+                        </li>
+
                     </ul>
                     <ul class="navbar-nav mb-2 mb-lg-0">
                         {% if current_user.is_authenticated %}

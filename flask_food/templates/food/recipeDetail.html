@@ -27,20 +27,18 @@
         </div>
     </div>
 
-    <!-- 点赞和收藏按钮 -->
-    <div class="action-buttons mb-4">
-        <button id="likeBtn" class="btn btn-outline-danger me-2">
-            <i class="bi bi-heart{% if current_user.is_authenticated and current_user in recipe.liked_by_users %}-fill{% endif %}"></i>
+    <!-- 修改后的按钮代码 -->
+    <div class="btn-group" role="group">
+        <!-- 点赞按钮 -->
+        <button id="likeBtn" class="btn btn-outline-danger {% if current_user.is_authenticated and current_user in recipe.liked_by_users %}active{% endif %}">
+            <i class="bi {% if current_user.is_authenticated and current_user in recipe.liked_by_users %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
             <span id="likeCount">{{ recipe.liked_by_users|length }}</span>
         </button>
 
-        <button id="favoriteBtn" class="btn btn-outline-warning me-2">
-            <i class="bi bi-bookmark{% if current_user.is_authenticated and current_user in recipe.favorited_by_users %}-fill{% endif %}"></i>
+        <!-- 收藏按钮 -->
+        <button id="favoriteBtn" class="btn btn-outline-warning {% if current_user.is_authenticated and current_user in recipe.favorited_by_users %}active{% endif %}">
+            <i class="bi {% if current_user.is_authenticated and current_user in recipe.favorited_by_users %}bi-bookmark-fill{% else %}bi-bookmark{% endif %}"></i>
             <span id="favoriteCount">{{ recipe.favorited_by_users|length }}</span>
-        </button>
-
-        <button class="btn btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#commentSection">
-            <i class="bi bi-chat-left-text"></i> 评论 <span class="badge bg-secondary">{{ recipe.comments|length }}</span>
         </button>
     </div>
 
@@ -166,6 +164,49 @@
             <i class="bi bi-arrow-left"></i> 返回食谱列表
         </a>
     </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const favoriteBtn = document.getElementById('favoriteBtn');
+        const favoriteCountSpan = document.getElementById('favoriteCount');
+        const favoriteCountSide = document.getElementById('favoriteCountSide');
+        const icon = favoriteBtn.querySelector('i');
+
+        favoriteBtn.addEventListener('click', function () {
+            const postId = {{ recipe.id }};
+
+            fetch(`/favorites/${postId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'  // 如果未使用 CSRF，可移除
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const isAdded = data.action === 'added';
+
+                    // 更新图标
+                    icon.classList.toggle('bi-bookmark', !isAdded);
+                    icon.classList.toggle('bi-bookmark-fill', isAdded);
+
+                    // 更新按钮样式（可选）
+                    favoriteBtn.classList.toggle('btn-outline-warning', !isAdded);
+                    favoriteBtn.classList.toggle('btn-warning', isAdded);
+
+                    // 更新收藏数
+                    let count = parseInt(favoriteCountSpan.textContent);
+                    count = isAdded ? count + 1 : count - 1;
+                    favoriteCountSpan.textContent = count;
+                    favoriteCountSide.textContent = count;
+                }
+            });
+        });
+    });
+    </script>
+
 </div>
 {% endblock %}
 
@@ -213,18 +254,17 @@
         });
 
         // 收藏功能
+        // 在recipe_detail.html中的收藏功能
         document.getElementById('favoriteBtn').addEventListener('click', function() {
-            {% if not current_user.is_authenticated %}
-                window.location.href = "{{ url_for('auth.login') }}";
-                return;
-            {% endif %}
-
-            fetch("{{ url_for('food.favorite_recipe', recipe_id=recipe.id) }}", {
+            fetch("{{ url_for('food.toggle_favorite', post_id=recipe.id) }}",  {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': '{{ csrf_token() }}'
-                }
+                },
+                body: JSON.stringify({
+                    post_id: {{ recipe.id }}
+                })
             })
             .then(response => response.json())
             .then(data => {
@@ -245,6 +285,27 @@
                 }
             });
         });
+
+        document.querySelectorAll('.favorite-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const url = this.getAttribute('data-url');
+
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    }
+                });
+            });
+        });
+
 
         // 评论功能
         {% if current_user.is_authenticated %}

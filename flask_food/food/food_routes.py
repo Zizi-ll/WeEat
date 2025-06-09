@@ -12,6 +12,7 @@ from wtforms.validators import DataRequired, Length, Optional
 from flask_food import db
 from flask_food.models import Post, Category, Notification,User
 from flask_food.models import Comment
+from flask_food.models import post_favorites
 
 food_bp = Blueprint('food', __name__,
                     static_folder='static',
@@ -51,8 +52,7 @@ def admin_required(f):
 @login_required
 def index():
     recipes = Post.query.order_by(Post.created_at.desc()).all()
-    return render_template('food/favourites.html', title='我的收藏', recipes=recipes)
-
+    return render_template('food/published.html', title='我的收藏', recipes=recipes)
 
 @food_bp.route('/add_recipe', methods=['GET', 'POST'])
 @login_required
@@ -358,32 +358,6 @@ def like_recipe(recipe_id):
         'likes_count': len(recipe.liked_by_users)
     })
 
-@food_bp.route('/recipe/<int:recipe_id>/favorite', methods=['POST'])
-@login_required
-def favorite_recipe(recipe_id):
-    recipe = Post.query.filter_by(id=recipe_id, status='approved', is_published=True).first()
-    if not recipe:
-        return jsonify({'success': False, 'message': '该食谱当前不可收藏或未发布。'}), 404
-
-    if current_user in recipe.favorited_by_users:
-        recipe.favorited_by_users.remove(current_user)
-        action = 'unfavorited'
-    else:
-        recipe.favorited_by_users.append(current_user)
-        action = 'favorited'
-        # 可选: 通知作者有人收藏
-        if recipe.author_id != current_user.id:
-            notif = Notification(recipient_id=recipe.author_id, actor_id=current_user.id, related_post_id=recipe.id,
-                                 notification_type='favorite',
-                                 message=f"{current_user.username} 收藏了你的食谱 '{recipe.title[:20]}...'")
-            db.session.add(notif)
-    db.session.commit()
-    return jsonify({
-        'success': True,
-        'action': action,
-        'favorites_count': len(recipe.favorited_by_users)
-    })
-
 @food_bp.route('/recipe/<int:recipe_id>/comment', methods=['POST'])
 @login_required
 def add_comment(recipe_id):
@@ -448,3 +422,70 @@ def add_comment(recipe_id):
         db.session.rollback()
         current_app.logger.error(f"添加评论时出错: {e}", exc_info=True)
         return jsonify({'success': False, 'message': '添加评论失败。'}), 500
+
+from flask import render_template, request
+from flask_login import current_user, login_required
+
+
+@food_bp.route('/favorites')
+@login_required
+def favorites():
+    """显示用户收藏的食谱（带分页）"""
+    page = request.args.get('page', 1, type=int)
+
+    # 使用正确的 join 查询
+    pagination = Post.query.join(
+        post_favorites,  # 确保这是你的关联表对象
+        post_favorites.c.post_id == Post.id
+    ).filter(
+        post_favorites.c.user_id == current_user.id
+    ).order_by(
+        Post.created_at.desc()
+    ).paginate(page=page, per_page=9)
+
+    posts = pagination.items
+
+    # 处理首图路径
+    for post in posts:
+        post.first_image_display_path = get_first_image_filename(post.image_paths)
+
+    return render_template('food/favorites.html', posts=posts, pagination=pagination)
+
+# @food_bp.route('/favorites')
+# @login_required
+# def show_favorites():
+#     """显示用户收藏的食谱"""
+#     # 获取用户收藏的食谱
+#     favorites = current_user.favorited_posts
+#     # 为每个食谱处理首图路径
+#     for recipe in favorites:
+#         recipe.first_image_display_path = get_first_image_filename(recipe.image_paths)
+#     return render_template('food/favorites.html', favorites=favorites)
+
+@food_bp.route('/favorite/<int:post_id>', methods=['POST'])
+@login_required
+def toggle_favorite(post_id):
+    post = Post.query.get_or_404(post_id)
+    if post in current_user.favorited_posts:
+        current_user.favorited_posts.remove(post)
+        action = 'removed'
+    else:
+        current_user.favorited_posts.append(post)
+        action = 'added'
+        # 添加收藏通知
+        if post.author_id != current_user.id:
+            notif = Notification(
+                recipient_id=post.author_id,
+                actor_id=current_user.id,
+                related_post_id=post.id,
+                notification_type='favorite',
+                message=f"{current_user.username} 收藏了你的食谱 '{post.title[:20]}...'"
+            )
+            db.session.add(notif)
+
+    db.session.commit()
+    return jsonify({
+        'success': True,
+        'action': action,
+        'favorites_count': len(post.favorited_by_users)
+    })
