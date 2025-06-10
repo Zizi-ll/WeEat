@@ -27,3 +27,13 @@ class RegistrationForm(FlaskForm):
         user = User.query.filter_by(email=email.data).first()
         if user:
             raise ValidationError('该邮箱已被注册。')
+
+class ChangePasswordForm(FlaskForm):
+    current_password = PasswordField('当前密码', validators=[DataRequired()])
+    new_password = PasswordField('新密码', validators=[DataRequired(), Length(min=6)])
+    confirm_password = PasswordField('确认新密码', validators=[DataRequired(), EqualTo('new_password')])
+    submit = SubmitField('更新密码')
+
+class DeleteAccountForm(FlaskForm):
+    confirm_password = PasswordField('确认密码', validators=[DataRequired()])
+    submit = SubmitField('确认注销')

@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block app_content %}
+{% block content %}
 <style>
     .top-bar {
         display: flex;
@@ -173,7 +173,7 @@
                 </div>
             {% endfor %}
         {% elif category_keyword %}
-            <p class="text-muted">没有找到分类为 “{{ category_keyword }}” 的食谱。</p>
+            <p class="text-muted">没有找到分类为 "{{ category_keyword }}" 的食谱。</p>
         {% else %}
             <p class="text-muted">暂无食谱，快去发布一份吧！</p>
         {% endif %}

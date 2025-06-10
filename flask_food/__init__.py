@@ -6,6 +6,7 @@ from flask_migrate import Migrate
 from flask_login import LoginManager
 from flask_bcrypt import Bcrypt
 from flask_wtf.csrf import CSRFProtect
+from flask_mail import Mail
 from config import Config
 
 #初始化数据库 (DB)、迁移 (Migrate)、登录管理器 (LoginManager)
@@ -16,6 +17,7 @@ login_manager = LoginManager() #登录管理的对象
 login_manager.login_view = 'auth.login'
 login_manager.login_message_category = 'info'
 csrf = CSRFProtect()
+mail = Mail()
 
 def create_app(config_class=Config):
     app = Flask(__name__) #Flask实例
@@ -27,6 +29,7 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
     bcrypt.init_app(app)
     csrf.init_app(app)
+    mail.init_app(app)
 
     try:
         recipes_upload_abs = app.config.get('UPLOAD_FOLDER_RECIPES_ABS')

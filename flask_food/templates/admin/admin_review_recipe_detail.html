@@ -36,7 +36,7 @@
     </style>
 {% endblock head_styles %}
 
-{% block app_content %}
+{% block content %}
 <div class="container mt-4">
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
@@ -87,7 +87,7 @@
                 {{ form.hidden_tag() }} {# CSRF Token #}
                 <div class="mb-3">
                     <label for="review_notes" class="form-label">{{ form.review_notes.label.text }}</label>
-                    {{ form.review_notes(class="form-control" + (" is-invalid" if form.review_notes.errors else ""), rows=3, placeholder="如果选择“拒绝发布”，请在此处填写原因...") }}
+                    {{ form.review_notes(class="form-control" + (" is-invalid" if form.review_notes.errors else ""), rows=3, placeholder="如果选择"拒绝发布"，请在此处填写原因...") }}
                     {% if form.review_notes.errors %}
                         <div class="invalid-feedback">
                             {% for error in form.review_notes.errors %}{{ error }}{% endfor %}
@@ -115,4 +115,4 @@
         {% endif %}
     {% endif %}
 </div>
-{% endblock app_content %}
+{% endblock %}
